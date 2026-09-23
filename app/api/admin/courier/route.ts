@@ -1,0 +1,5 @@
+import {guard,readJson,failure} from '@/lib/admin-api';
+import {saveCourier,disconnectCourier,testCourier,bookCourier,syncCourier,resetUncertainBooking} from '@/lib/steadfast';
+export async function PUT(request:Request){const denied=await guard(request);if(denied)return denied;try{return Response.json(saveCourier(await readJson(request)));}catch(error){return failure(error);}}
+export async function DELETE(request:Request){const denied=await guard(request);if(denied)return denied;try{disconnectCourier();return Response.json({ok:true});}catch(error){return failure(error);}}
+export async function POST(request:Request){const denied=await guard(request);if(denied)return denied;try{const {action,id,confirmed}=await readJson(request);switch(action){case 'test':return Response.json(await testCourier());case 'book':return Response.json({order:await bookCourier(id)});case 'sync':return Response.json({order:await syncCourier(id)});case 'reset':resetUncertainBooking(id,confirmed===true);return Response.json({ok:true});default:throw new Error('Unknown courier action.');}}catch(error){return failure(error);}}

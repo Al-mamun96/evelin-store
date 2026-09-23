@@ -1,0 +1,6 @@
+import {guard,readJson,failure} from '@/lib/admin-api';
+import {createOrder,editOrder,setOrderStatus} from '@/lib/orders';
+import {bookCourier,courierSettings} from '@/lib/steadfast';
+export async function POST(request:Request){const denied=await guard(request);if(denied)return denied;try{return Response.json(createOrder(await readJson(request),true));}catch(error){return failure(error);}}
+export async function PUT(request:Request){const denied=await guard(request);if(denied)return denied;try{const body=await readJson(request);return Response.json({order:editOrder(body.id,body)});}catch(error){return failure(error);}}
+export async function PATCH(request:Request){const denied=await guard(request);if(denied)return denied;try{const body=await readJson(request);if(!Number.isInteger(body.version))throw new Error('Refresh this order before updating.');setOrderStatus(body.id,body.status,body.version,body.receivedReturn===true);let warning='';if(body.status==='Confirmed'&&courierSettings().autoBook)try{await bookCourier(body.id);}catch(error){warning=error instanceof Error?error.message:'Courier booking needs attention.';}return Response.json({ok:true,warning});}catch(error){return failure(error);}}

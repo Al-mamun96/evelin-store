@@ -1,0 +1,12 @@
+# Validation record — Store Studio update
+
+- Production `next build`: passed with all storefront, admin, media and API routes. Temporary visual-test routes were removed before the final build.
+- TypeScript strict check: passed.
+- 16 automated integrity tests: passed. Includes product CRUD/restore, settings and version conflicts, order pricing and edit reconciliation, rollback, idempotency, cancellation/restocking, stock adjustment conflicts, historical deleted-product orders, encrypted courier settings, mocked courier booking/delivery/timeout behavior, legacy database migration, and a backup containing uploads.
+- HTTP tests against the standalone production server: passed. Tests unauthenticated admin rejection, origin checks, secure login cookies, protected admin data, checkout pricing/idempotency, order edit/version/stock correctness, fulfillment transitions, invoice, product create/edit/delete/restore, real PNG-to-WebP upload and invalid image rejection, media retrieval, homepage changes and paused checkout.
+- Browser component checks used an isolated synthetic-data harness with mutations disabled. Dashboard navigation, product editor and manual order editor render correctly. Product selection, shipping fee changes, discount and advance recalculate the visible COD correctly (৳2,450 + ৳130 − ৳100 − ৳500 = ৳1,980).
+- A browser issue in local HTTP previews (`crypto.randomUUID` unavailable) was found and fixed with a cryptographic UUID helper that also works in that preview environment.
+- Desktop dashboard visually inspected. Static snapshots of the actual rendered admin components were inspected in a 390 px browser frame (375 px content area with scrollbar). Dashboard and order form had no page-wide horizontal overflow. Screenshots use illustrative data, not a live merchant account.
+- Earlier storefront checks covered desktop images, size validation, bag/cart, delivery recalculation and mobile layouts at 320/390 px. These are browser checks, not physical-device tests.
+
+No Hostinger/Coolify deployment, real courier booking, real customer order, payment gateway transaction or physical-device test was performed. Steadfast provider calls were mocked for automated tests; a live merchant connection/parcel test is required after configuration. Docker was not available; the Node standalone production output was run directly. Backups were verified with temporary data; an off-server scheduler/storage destination is not configured.

@@ -1,0 +1,18 @@
+import {test,after} from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {randomUUID} from 'node:crypto';
+const directory=mkdtempSync(join(tmpdir(),'evelin-test-'));
+process.env.DATABASE_PATH=join(directory,'store.sqlite');
+const {createOrder,setOrderStatus}=await import('../lib/orders.ts');
+const {db}=await import('../lib/db.ts');
+const input=()=>({requestKey:randomUUID(),customer:'Test Customer',phone:'01712345678',address:'Test road, Dhaka, Bangladesh',zone:'dhaka',note:'Test order',items:[{id:'ivory-panjabi',size:'M',quantity:1}]});
+test('order totals use catalog prices, delivery, and ignore client prices',()=>{const result=createOrder({...input(),total:1,items:[{id:'ivory-panjabi',size:'M',quantity:1,price:1}]}) as {id:string;total:number};assert.equal(result.total,2530);});
+test('idempotent retries create one order and decrement stock once',()=>{const data=input();const before=db().prepare("SELECT stock FROM inventory WHERE product_id='ivory-panjabi' AND size='M'").get()!.stock as number;const a=createOrder(data);const b=createOrder(data);assert.deepEqual(a,b);assert.equal(db().prepare("SELECT stock FROM inventory WHERE product_id='ivory-panjabi' AND size='M'").get()!.stock,before-1);});
+test('stock changes roll back when any order line is invalid',()=>{const before=db().prepare("SELECT stock FROM inventory WHERE product_id='ivory-panjabi' AND size='M'").get()!.stock;assert.throws(()=>createOrder({...input(),items:[{id:'ivory-panjabi',size:'M',quantity:1},{id:'missing',size:'M',quantity:1}]}));assert.equal(db().prepare("SELECT stock FROM inventory WHERE product_id='ivory-panjabi' AND size='M'").get()!.stock,before);});
+test('duplicate lines cannot bypass quantity caps',()=>{assert.throws(()=>createOrder({...input(),items:[{id:'ivory-panjabi',size:'S',quantity:6},{id:'ivory-panjabi',size:'S',quantity:6}]}));});
+test('cancellation restores stock exactly once and cannot reopen',()=>{const order=createOrder(input()) as {id:string};const before=db().prepare("SELECT stock FROM inventory WHERE product_id='ivory-panjabi' AND size='M'").get()!.stock as number;setOrderStatus(order.id,'Cancelled');setOrderStatus(order.id,'Cancelled');assert.equal(db().prepare("SELECT stock FROM inventory WHERE product_id='ivory-panjabi' AND size='M'").get()!.stock,before+1);assert.throws(()=>setOrderStatus(order.id,'Confirmed'));});
+test('invalid phone numbers, quantities and sizes are rejected',()=>{assert.throws(()=>createOrder({...input(),phone:'abc'}));assert.throws(()=>createOrder({...input(),items:[{id:'ivory-panjabi',size:'M',quantity:-1}]}));assert.throws(()=>createOrder({...input(),items:[{id:'ivory-panjabi',size:'fake',quantity:1}]}));});
+after(()=>{db().close();rmSync(directory,{recursive:true,force:true});});
