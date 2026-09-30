@@ -1,6 +1,6 @@
 import {z} from 'zod';
 import {db,audit,transaction} from './db.ts';
-import {MAX_HERO_SLIDES} from './shared.ts';
+import {MAX_HERO_SLIDES,DEFAULT_HEADING_FONT,DEFAULT_BODY_FONT,safeFont} from './shared.ts';
 export const imagePath=z.string().regex(/^\/(?:images\/[a-zA-Z0-9_-]+\.(?:webp|png|jpe?g)|media\/[a-f0-9-]+\.webp)$/,'Upload a photo or use an existing store photo.');
 const short=z.string().trim().min(1).max(180);
 export const heroSlideSchema=z.object({
@@ -23,7 +23,10 @@ export const logoPath=z.union([z.literal(''),imagePath]);
 export const settingsSchema=z.object({
   storeName:short,logo:logoPath,
   /** Logo size as a percentage of the default, applied to header, menu and footer. */
-  logoSize:z.number().int().min(40).max(220).default(100),announcement:short,heroEyebrow:short,heroTitle:z.string().trim().min(1).max(160),heroAccent:short,heroDescription:z.string().trim().max(400),heroButton:short,heroImage:imagePath,
+  logoSize:z.number().int().min(40).max(220).default(100),
+  /** Google Fonts family names, validated against a whitelist in lib/shared. */
+  headingFont:z.string().trim().min(1).max(60).default(DEFAULT_HEADING_FONT),
+  bodyFont:z.string().trim().min(1).max(60).default(DEFAULT_BODY_FONT),announcement:short,heroEyebrow:short,heroTitle:z.string().trim().min(1).max(160),heroAccent:short,heroDescription:z.string().trim().max(400),heroButton:short,heroImage:imagePath,
   // Ordered banner slides for the homepage slider. Normalized to at least one on save.
   heroSlides:z.array(heroSlideSchema).max(MAX_HERO_SLIDES).default([]),
   collectionTitle:short,featuredTitle:short,storyTitle:short,storyText:z.string().trim().max(600),
@@ -35,9 +38,9 @@ export const settingsSchema=z.object({
 });
 export type StoreSettings=z.infer<typeof settingsSchema>;
 export function defaultSettings():StoreSettings{return {
-  storeName:'Evelin',logo:'',logoSize:100,announcement:'Thoughtfully made. Effortlessly worn.',heroEyebrow:'THE EVELIN COLLECTION',heroTitle:'Tradition,\nwith a modern',heroAccent:'point of view.',heroDescription:'Considered silhouettes. Quiet details.\nModest wear that feels like you.',heroButton:'Explore the collection',heroImage:'/images/editorial.webp',collectionTitle:'A collection for every you.',featuredTitle:'Meet your new favourites.',storyTitle:'Style that speaks softly.\nAnd says everything.',storyText:'We believe the best pieces don’t ask for attention.\nThey earn a place in your everyday.',contactPhone:'',contactEmail:'',storeAddress:'Dhaka, Bangladesh',
+  storeName:'Evelin',logo:'',logoSize:100,headingFont:DEFAULT_HEADING_FONT,bodyFont:DEFAULT_BODY_FONT,announcement:'Thoughtfully made. Effortlessly worn.',heroEyebrow:'THE EVELIN COLLECTION',heroTitle:'Tradition,\nwith a modern',heroAccent:'point of view.',heroDescription:'Considered silhouettes. Quiet details.\nModest wear that feels like you.',heroButton:'Explore the collection',heroImage:'/images/editorial.webp',collectionTitle:'A collection for every you.',featuredTitle:'Meet your new favourites.',storyTitle:'Style that speaks softly.\nAnd says everything.',storyText:'We believe the best pieces don’t ask for attention.\nThey earn a place in your everyday.',contactPhone:'',contactEmail:'',storeAddress:'Dhaka, Bangladesh',
   deliveryPolicy:'Delivery charges are shown at checkout. Delivery timelines will be confirmed before launch.',returnsPolicy:'Our exchange window, eligibility and return delivery charges will be published before launch.',privacyPolicy:'We collect your name, phone number and delivery address to process orders. Delivery details are shared with the courier when booking a parcel. Contact the store for data requests.',  storeLive:process.env.STORE_LIVE==='true',lowStockThreshold:3,zones:[{id:'dhaka',name:'Inside Dhaka',fee:80},{id:'outside',name:'Outside Dhaka',fee:130}],heroSlides:[{id:'slide-1',image:'/images/editorial.webp',alt:''}],version:1
 };}
-export function getSettings():StoreSettings{const row=db().prepare("SELECT value FROM settings WHERE key='store'").get();const stored:Record<string,unknown>=row?JSON.parse(String(row.value)):{};const merged={...defaultSettings(),...stored};return {...merged,heroSlides:normalizeSlides(merged.heroSlides,merged.heroImage)} as StoreSettings;}
-export function saveSettings(raw:unknown){const value=settingsSchema.parse(raw);const slides=normalizeSlides(value.heroSlides,value.heroImage);return transaction(()=>{if(getSettings().version!==value.version)throw new Error('Settings changed in another tab. Refresh and try again.');const next={...value,heroSlides:slides,heroImage:slides[0].image,version:value.version+1};db().prepare("INSERT INTO settings VALUES ('store',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(JSON.stringify(next));audit('Settings updated','Store');return next;});}
+export function getSettings():StoreSettings{const row=db().prepare("SELECT value FROM settings WHERE key='store'").get();const stored:Record<string,unknown>=row?JSON.parse(String(row.value)):{};const merged={...defaultSettings(),...stored};return {...merged,heroSlides:normalizeSlides(merged.heroSlides,merged.heroImage),headingFont:safeFont(merged.headingFont,DEFAULT_HEADING_FONT),bodyFont:safeFont(merged.bodyFont,DEFAULT_BODY_FONT)} as StoreSettings;}
+export function saveSettings(raw:unknown){const value=settingsSchema.parse(raw);const slides=normalizeSlides(value.heroSlides,value.heroImage);const headingFont=safeFont(value.headingFont,DEFAULT_HEADING_FONT),bodyFont=safeFont(value.bodyFont,DEFAULT_BODY_FONT);return transaction(()=>{if(getSettings().version!==value.version)throw new Error('Settings changed in another tab. Refresh and try again.');const next={...value,heroSlides:slides,heroImage:slides[0].image,headingFont,bodyFont,version:value.version+1};db().prepare("INSERT INTO settings VALUES ('store',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(JSON.stringify(next));audit('Settings updated','Store');return next;});}
 export function deliveryFor(zone:string){const match=getSettings().zones.find(z=>z.id===zone);if(!match)throw new Error('This delivery zone is no longer available. Please choose another.');return match;}

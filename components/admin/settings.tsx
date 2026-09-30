@@ -1,5 +1,6 @@
 'use client';
 import {requestKey as newRequestKey} from '@/lib/request-key';
+import {HEADING_FONTS,BODY_FONTS} from '@/lib/shared';
 import {useState,FormEvent} from 'react';
 import {Plus,Trash2,ExternalLink} from 'lucide-react';
 import type {StoreSettings} from '@/lib/store-settings';
@@ -12,6 +13,27 @@ export function StoreEditor({settings,mutate,busy,section}:{settings:StoreSettin
   const field=(name:keyof StoreSettings)=>({value:String(value[name]),onChange:(e:React.ChangeEvent<HTMLInputElement|HTMLTextAreaElement>)=>setValue({...value,[name]:e.target.value})});
  async function submit(e:FormEvent){e.preventDefault();await mutate('/api/admin/settings',value,'PUT','Saved. Your storefront now uses these settings.');}
  return <form onSubmit={submit} className="studio-form"><div className="studio-section-head"><div><h2>{section==='homepage'?'Homepage editor':'Store settings'}</h2><p>পরিবর্তন লিখে Save চাপুন। ওয়েবসাইটে সঙ্গে সঙ্গে দেখা যাবে।</p></div><div className="row-actions"><a href="/" target="_blank" rel="noreferrer" className="studio-secondary">View store <ExternalLink size={16}/></a><button className="studio-primary" disabled={busy||uploading}>{busy?'Saving…':'Save changes'}</button></div></div>{section==='homepage'?<div className="editor-columns"><div><section className="studio-card"><h3>Homepage hero</h3><label>Top announcement<input required maxLength={180} {...field('announcement')}/></label><label>Small heading<input required maxLength={180} {...field('heroEyebrow')}/></label><label>Main title<textarea required maxLength={160} rows={3} {...field('heroTitle')}/><small>নতুন লাইন দিতে Enter চাপুন।</small></label><label>Accent title<input required maxLength={180} {...field('heroAccent')}/></label><label>Description<textarea maxLength={400} rows={3} {...field('heroDescription')}/></label><label>Button label<input required maxLength={180} {...field('heroButton')}/></label></section><section className="studio-card"><h3>Section titles</h3><label>Collections heading<input required maxLength={180} {...field('collectionTitle')}/></label><label>Featured products heading<input required maxLength={180} {...field('featuredTitle')}/></label><label>Brand story heading<textarea required maxLength={180} {...field('storyTitle')}/></label><label>Brand story text<textarea rows={3} maxLength={600} {...field('storyText')}/></label></section></div><section className="studio-card"><h3>Banner slides</h3><HeroSlideManager slides={value.heroSlides} onChange={heroSlides=>setValue({...value,heroSlides,heroImage:heroSlides[0]?.image||value.heroImage})} onBusy={setUploading}/><p className="studio-hint">Landscape photo recommended. মোবাইল ও desktop দুটোতেই ছবি ব্যবহার হবে।</p><div className="homepage-mini-preview"><small>{value.heroEyebrow}</small><h2>{value.heroTitle}<em>{value.heroAccent}</em></h2><p>{value.heroDescription}</p><span>{value.heroButton}</span></div></section></div>:<><div className="editor-columns"><section className="studio-card"><h3>Store information</h3><label>Store name<input required maxLength={180} {...field('storeName')}/></label>
+<h3 style={{marginTop:24}}>Website fonts</h3>
+<div className="form-two">
+  <label>Heading / title font
+    <select value={value.headingFont} onChange={e=>setValue({...value,headingFont:e.target.value})}>
+      {HEADING_FONTS.map(f=><option key={f.id} value={f.id}>{f.label}</option>)}
+    </select>
+  </label>
+  <label>Body text font
+    <select value={value.bodyFont} onChange={e=>setValue({...value,bodyFont:e.target.value})}>
+      {BODY_FONTS.map(f=><option key={f.id} value={f.id}>{f.label}</option>)}
+    </select>
+  </label>
+</div>
+<div className="font-preview">
+  <span style={{fontFamily:"'"+value.headingFont+"',Georgia,serif"}}>Aa</span>
+  <div>
+    <p style={{fontFamily:"'"+value.headingFont+"',Georgia,serif"}}>{(value.heroTitle.split('\n')[0]||'Timeless')}</p>
+    <p className="font-preview-body" style={{fontFamily:"'"+value.bodyFont+"',Arial,sans-serif"}}>The quick brown fox jumps over the lazy dog</p>
+  </div>
+</div>
+<p className="studio-hint">Choose a font and press Save changes to apply it across the whole website.</p>
 <h3 style={{marginTop:24}}>Store logo</h3>
 <div className="logo-upload">
   <div className="logo-preview">
