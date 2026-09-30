@@ -20,7 +20,9 @@ next-env.d.ts.timestamp
 
 # Live store data — contains the SQLite database and uploaded product photos.
 # Losing this directory loses orders, products and stock.
-data/
+# Anchored to the repo root: an unanchored data/ would also match source paths
+# such as app/api/admin/data/.
+/data/
 
 # Database and backup artifacts
 backups/
