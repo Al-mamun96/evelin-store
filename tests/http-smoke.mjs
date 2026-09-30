@@ -1,0 +1,50 @@
+import {spawn} from 'node:child_process';
+import {randomBytes,randomUUID} from 'node:crypto';
+import {mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import assert from 'node:assert/strict';
+import sharp from 'sharp';
+const directory=mkdtempSync(join(tmpdir(),'evelin-http-'));
+const password=randomBytes(24).toString('hex'),origin='http://127.0.0.1:3100';
+const child=spawn(process.execPath,['.next/standalone/server.js'],{env:{...process.env,PORT:'3100',HOSTNAME:'127.0.0.1',NEXT_PUBLIC_SITE_URL:origin,DATABASE_PATH:join(directory,'store.sqlite'),ADMIN_PASSWORD:password,SESSION_SECRET:randomBytes(32).toString('hex'),STORE_LIVE:'true'},stdio:'ignore'});
+let session='';
+const request=(path,body,method='POST',headers={})=>fetch(origin+path,{method,headers:{origin,cookie:session,'content-type':'application/json',...headers},body:JSON.stringify(body)});
+const adminData=async()=>{const r=await fetch(origin+'/api/admin/data',{headers:{cookie:session}});assert.equal(r.status,200);return r.json();};
+const ok=async(response,status=200)=>{assert.equal(response.status,status,await response.clone().text());return response.json();};
+try{
+ for(let n=0;n<80;n++){try{if((await fetch(origin+'/api/health')).ok)break;}catch{}await new Promise(r=>setTimeout(r,100));}
+ assert.equal((await fetch(origin+'/api/health')).status,200);
+ const product=await (await fetch(origin+'/products/ivory-panjabi')).text();assert.ok(product.includes('The Ivory Panjabi'));assert.ok(!product.includes('Only plain objects'));
+ for(const path of ['orders','products','settings','inventory','courier','upload'])assert.equal((await request('/api/admin/'+path,{},path==='settings'?'PUT':path==='inventory'?'PATCH':'POST')).status,401);
+ assert.equal((await fetch(origin+'/api/admin/data')).status,401);
+ assert.equal((await request('/api/orders',{},'POST',{origin:'https://invalid.example'})).status,403);
+ const input={requestKey:randomUUID(),customer:'Local Test',phone:'01712345678',address:'Test address, Dhaka, Bangladesh',zone:'outside',note:'Local test only',items:[{id:'ivory-panjabi',size:'M',quantity:2}],total:1};
+ const order=await ok(await request('/api/orders',input),201);assert.equal(order.total,5030);
+ assert.deepEqual(await ok(await request('/api/orders',input),201),order);
+ const login=await request('/api/admin/login',{password});assert.equal(login.status,200);const cookie=login.headers.get('set-cookie');assert.ok(cookie.includes('HttpOnly'));assert.ok(cookie.includes('Secure'));assert.ok(cookie.includes('SameSite=strict'));session=cookie.split(';')[0];
+ const dashboard=await (await fetch(origin+'/admin',{headers:{cookie:session}})).text();assert.ok(dashboard.includes('STORE STUDIO'));assert.ok(!dashboard.includes('Only plain objects'));
+ assert.equal((await request('/api/admin/products',{},'POST',{origin:'https://invalid.example'})).status,401);
+ let data=await adminData(),saved=data.orders.find(o=>o.id===order.id);assert.ok(saved);
+ await ok(await request('/api/admin/orders',{...input,id:order.id,version:saved.version,zone:'dhaka',address:'Updated address, Dhaka, Bangladesh',items:[{id:'ivory-panjabi',size:'M',quantity:1}],discount:100,advance:500},'PUT'));
+ data=await adminData();saved=data.orders.find(o=>o.id===order.id);assert.equal(saved.total,2430);assert.equal(saved.advance,500);assert.equal(saved.address,'Updated address, Dhaka, Bangladesh');assert.equal(data.inventory.find(i=>i.product_id==='ivory-panjabi'&&i.size==='M').stock,9);
+ assert.equal((await request('/api/admin/orders',{...input,id:order.id,version:1},'PUT')).status,400);
+ for(const status of ['Confirmed','Shipped','Delivered']){data=await adminData();await ok(await request('/api/admin/orders',{id:order.id,status,version:data.orders.find(o=>o.id===order.id).version},'PATCH'));}
+ const invoice=await (await fetch(origin+'/admin/orders/'+order.id+'/invoice',{headers:{cookie:session}})).text();assert.ok(invoice.includes(order.id));assert.ok(invoice.includes('Updated address'));
+ await ok(await request('/api/admin/inventory',{id:'ivory-panjabi',size:'S',stock:8,expectedStock:10,reason:'Physical stock count'},'PATCH'));
+ assert.equal((await request('/api/admin/inventory',{id:'ivory-panjabi',size:'S',stock:5,expectedStock:10,reason:'Stale count'},'PATCH')).status,400);
+ const image=await sharp({create:{width:50,height:50,channels:3,background:'#741f35'}}).png().toBuffer();const form=new FormData();form.set('file',new Blob([image],{type:'image/png'}),'test.png');
+ const uploaded=await ok(await fetch(origin+'/api/admin/upload',{method:'POST',headers:{origin,cookie:session},body:form}));const served=await fetch(origin+uploaded.url);assert.equal(served.status,200);assert.equal(served.headers.get('content-type'),'image/webp');
+ const invalid=new FormData();invalid.set('file',new Blob(['<svg/>'],{type:'image/svg+xml'}),'invalid.svg');assert.equal((await fetch(origin+'/api/admin/upload',{method:'POST',headers:{origin,cookie:session},body:invalid})).status,400);
+ let p=(await ok(await request('/api/admin/products',{name:'HTTP Test Product',category:'New category',price:700,image:uploaded.url,color:'Berry',hex:'#741f35',description:'HTTP integration sample',fabric:'Cotton',sizes:['M'],active:true,initialStock:5}))).product;
+ p=(await ok(await request('/api/admin/products',{...p,name:'Updated HTTP Product',price:800}))).product;
+ assert.ok((await (await fetch(origin+'/products/'+p.id)).text()).includes('Updated HTTP Product'));
+ await ok(await request('/api/admin/products',{id:p.id,version:p.version},'DELETE'));assert.equal((await fetch(origin+'/products/'+p.id)).status,404);
+ data=await adminData();p=data.products.find(x=>x.id===p.id);await ok(await request('/api/admin/products',{id:p.id,version:p.version},'PATCH'));data=await adminData();assert.equal(data.products.find(x=>x.id===p.id).active,false);
+await ok(await request('/api/admin/settings',{...data.settings,heroTitle:'A changed homepage title',heroSlides:[...data.settings.heroSlides,{id:'slide-http',image:uploaded.url,alt:'A test slide'}],storeLive:false,zones:[...data.settings.zones,{id:'nearby',name:'Nearby Dhaka',fee:100}]},'PUT'));
+  const homepage=await (await fetch(origin+'/')).text();
+  assert.ok(homepage.includes('A changed homepage title'));assert.ok(homepage.includes('slide-http'));
+  assert.equal((await request('/api/orders',{...input,requestKey:randomUUID()})).status,503);
+ assert.equal((await fetch(origin+'/api/admin/data',{headers:{cookie:'evelin_admin=tampered'}})).status,401);
+ console.log('PASS: production rendering, protected admin APIs, origin checks, login, checkout totals/idempotency, order editing/stock/version checks, status transitions, invoice, product CRUD, image validation/storage, homepage banner slides, homepage settings and checkout pause.');
+}finally{child.kill('SIGTERM');await new Promise(r=>child.once('exit',r));rmSync(directory,{recursive:true,force:true});}

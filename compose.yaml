@@ -1,0 +1,20 @@
+services:
+  evelin:
+    build: .
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:?Set the full https URL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set a strong admin password}
+      SESSION_SECRET: ${SESSION_SECRET:?Set a random 32+ character secret}
+      SETTINGS_ENCRYPTION_KEY: ${SETTINGS_ENCRYPTION_KEY:-}
+      STORE_LIVE: ${STORE_LIVE:-false}
+      DATABASE_PATH: /app/data/evelin.sqlite
+    volumes:
+      - evelin_data:/app/data
+      - evelin_backups:/app/backups
+    mem_limit: 1g
+volumes:
+  evelin_data:
+  evelin_backups:

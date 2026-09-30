@@ -1,0 +1,35 @@
+import {createCipheriv,createDecipheriv,createHash,randomBytes} from 'node:crypto';
+import {z} from 'zod';
+import {db,transaction,audit} from './db.ts';
+import {getOrder} from './orders.ts';
+const hosts=['https://portal.steadfast.com.bd/api/v1','https://portal.packzy.com/api/v1'] as const;
+const schema=z.object({apiKey:z.string().trim().min(1).max(500),secretKey:z.string().trim().min(1).max(500),baseUrl:z.enum(hosts),autoBook:z.boolean()});
+type Credentials=z.infer<typeof schema>;
+function encryptionKey(){const secret=process.env.SETTINGS_ENCRYPTION_KEY||process.env.SESSION_SECRET;if(!secret||secret.length<32)throw new Error('The server encryption key has not been configured.');return createHash('sha256').update(secret).digest();}
+function encrypt(value:string){const iv=randomBytes(12),cipher=createCipheriv('aes-256-gcm',encryptionKey(),iv);const data=Buffer.concat([cipher.update(value,'utf8'),cipher.final()]);return [iv,cipher.getAuthTag(),data].map(b=>b.toString('base64')).join('.');}
+function credentials():Credentials|undefined{const row=db().prepare("SELECT value FROM settings WHERE key='steadfast'").get();if(!row)return;try{const [iv,tag,data]=String(row.value).split('.').map(v=>Buffer.from(v,'base64'));const cipher=createDecipheriv('aes-256-gcm',encryptionKey(),iv);cipher.setAuthTag(tag);return schema.parse(JSON.parse(Buffer.concat([cipher.update(data),cipher.final()]).toString()));}catch{throw new Error('Courier credentials could not be unlocked. Re-enter both keys in Courier settings.');}}
+export function courierSettings(){try{const c=credentials();return {configured:!!c,baseUrl:c?.baseUrl||hosts[0],autoBook:c?.autoBook||false};}catch{return {configured:false,baseUrl:hosts[0],autoBook:false,needsReset:true};}}
+export function saveCourier(raw:unknown){const input=z.object({apiKey:z.string().trim().max(500),secretKey:z.string().trim().max(500),baseUrl:z.enum(hosts),autoBook:z.boolean()}).parse(raw);let old:Credentials|undefined;try{old=credentials();}catch{/* Complete replacement can recover a rotated encryption key. */}const value=schema.parse({...input,apiKey:input.apiKey||old?.apiKey,secretKey:input.secretKey||old?.secretKey});db().prepare("INSERT INTO settings VALUES ('steadfast',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(encrypt(JSON.stringify(value)));audit('Courier settings updated','Steadfast');return courierSettings();}
+export function disconnectCourier(){db().prepare("DELETE FROM settings WHERE key='steadfast'").run();audit('Courier disconnected','Steadfast');}
+async function call(path:string,body?:unknown){const c=credentials();if(!c)throw new Error('Add your Steadfast API key and secret key first.');try{const response=await fetch(c.baseUrl+path,{method:body?'POST':'GET',headers:{'Api-Key':c.apiKey,'Secret-Key':c.secretKey,'Content-Type':'application/json','Accept':'application/json'},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(15000),redirect:'error',cache:'no-store'});const json=await response.json();if(!response.ok||Number(json.status)!==200)throw new Error('provider-rejected');return json;}catch{throw new Error('Steadfast could not confirm this request. Check your keys, balance and merchant portal; do not create a duplicate parcel.');}}
+export async function testCourier(){const result=await call('/get_balance');const balance=Number(result.current_balance);if(!Number.isFinite(balance))throw new Error('Steadfast returned an unexpected balance response.');return {connected:true,balance};}
+export async function bookCourier(id:string){
+ credentials(); // Fail before claiming if settings cannot be read.
+ if(!courierSettings().configured)throw new Error('Configure Steadfast first.');
+ const order=transaction(()=>{const order=getOrder(id);if(!order)throw new Error('Order not found.');if(order.status!=='Confirmed')throw new Error('Confirm this order before courier booking.');if(order.courier&&order.courier.state!=='failed')throw new Error('This order was already submitted or is awaiting verification. Use Sync status.');
+  db().prepare("INSERT INTO courier(order_id,state) VALUES (?,'requesting') ON CONFLICT(order_id) DO UPDATE SET state='requesting',message='',updated_at=datetime('now')").run(id);
+  db().prepare('UPDATE orders SET version=version+1 WHERE id=?').run(id);audit('Courier submission started',id);return order;});
+ try{
+  const result=await call('/create_order',{invoice:id,recipient_name:order.customer,recipient_phone:order.phone,recipient_address:order.address,cod_amount:order.total-order.advance,note:order.note});
+  const c=result.consignment;if(!c||!c.consignment_id||!c.tracking_code||c.invoice!==id)throw new Error('Unexpected courier response.');
+  db().prepare("UPDATE courier SET state='booked',consignment_id=?,tracking_code=?,delivery_status=?,message='',updated_at=datetime('now') WHERE order_id=?").run(String(c.consignment_id),String(c.tracking_code),String(c.status||'in_review'),id);audit('Courier booked',id,String(c.consignment_id));return getOrder(id)!;
+ }catch{db().prepare("UPDATE courier SET state='unknown',message=?,updated_at=datetime('now') WHERE order_id=?").run('Booking outcome is uncertain. Check the merchant portal, then sync by invoice before retrying.',id);audit('Courier needs verification',id);throw new Error('Booking outcome is uncertain. Check Steadfast using invoice '+id+', then use Sync status. Automatic retry is blocked to prevent duplicate parcels.');}
+}
+export async function syncCourier(id:string){const order=getOrder(id);if(!order?.courier)throw new Error('This order has not been submitted to Steadfast.');
+ if(order.courier.state==='requesting'&&Date.now()-Date.parse(order.courier.updated_at+'Z')<20000)throw new Error('The booking request is still running. Wait a moment before syncing.');
+ const result=await call('/status_by_invoice/'+encodeURIComponent(id));const status=String(result.delivery_status||'');if(!status||status==='unknown')throw new Error('Steadfast has not confirmed a parcel for this invoice. Check the merchant portal.');
+ db().prepare("UPDATE courier SET state='booked',delivery_status=?,message='',updated_at=datetime('now') WHERE order_id=?").run(status,id);
+ if(status==='delivered'&&['Pending','Confirmed','Shipped'].includes(order.status))db().prepare("UPDATE orders SET status='Delivered',version=version+1 WHERE id=?").run(id);
+ audit('Courier status synced',id,status);return getOrder(id)!;
+}
+export function resetUncertainBooking(id:string,confirmed:boolean){transaction(()=>{const order=getOrder(id);if(!confirmed||!order?.courier||!['unknown','requesting'].includes(order.courier.state))throw new Error('Check Steadfast and confirm no parcel exists before resetting.');if(Date.now()-Date.parse(order.courier.updated_at+'Z')<60000)throw new Error('Wait at least one minute for the original request to finish.');db().prepare("UPDATE courier SET state='failed',message='Admin verified no parcel exists',updated_at=datetime('now') WHERE order_id=?").run(id);audit('Courier retry unlocked',id,'Admin confirmed no parcel exists in merchant portal');});}

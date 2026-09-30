@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js build output
+.next/
+out/
+next-env.d.ts.timestamp
+
+# TypeScript incremental build cache
+*.tsbuildinfo
+
+# Secrets — never commit real values
+.env
+.env.local
+.env*.local
+.env.production
+!.env.example
+
+# Live store data — contains the SQLite database and uploaded product photos.
+# Losing this directory loses orders, products and stock.
+data/
+
+# Database and backup artifacts
+backups/
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+*.db
+
+# Generated artwork sources, per the README project notes
+source-artwork/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Test and tooling output
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+
+# Editor and OS noise
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Vercel / Coolify
+.vercel
