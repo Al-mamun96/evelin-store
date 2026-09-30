@@ -53,9 +53,15 @@ export const BODY_FONTS=[
 export const DEFAULT_HEADING_FONT='Italiana';
 export const DEFAULT_BODY_FONT='DM Sans';
 
-const known=[...HEADING_FONTS,...BODY_FONTS].map(f=>f.id);
-/** Narrows an arbitrary string to a whitelisted family name. */
-export function safeFont(value:unknown,fallback:string){
+const known:string[]=[...HEADING_FONTS,...BODY_FONTS].map(f=>f.id);
+/**
+ * Narrows an arbitrary string to a whitelisted family name.
+ *
+ * Returns the plain `string` type rather than a union of literals: the value
+ * flows into CSS and a URL, and keeping the literal union here would make every
+ * caller that passes a validated `string` fail to type check.
+ */
+export function safeFont(value:unknown,fallback:string):string{
   return typeof value==='string'&&known.includes(value)?value:fallback;
 }
 /** Font stacks are built from whitelisted names only, never from raw input. */
