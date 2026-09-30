@@ -5,6 +5,7 @@ import {Plus,Trash2,ExternalLink} from 'lucide-react';
 import type {StoreSettings} from '@/lib/store-settings';
 import type {Mutate} from './types';
 import {ImageUpload} from './image-upload';
+import {StoreLogo} from '../store-logo';
 import {HeroSlideManager} from './hero-slides';
 export function StoreEditor({settings,mutate,busy,section}:{settings:StoreSettings;mutate:Mutate;busy:boolean;section:'homepage'|'settings'}){
   const [value,setValue]=useState(settings),[uploading,setUploading]=useState(false);
@@ -14,8 +15,13 @@ export function StoreEditor({settings,mutate,busy,section}:{settings:StoreSettin
 <h3 style={{marginTop:24}}>Store logo</h3>
 <div className="logo-upload">
   <div className="logo-preview">
-    {value.logo?<img src={value.logo} alt="Current store logo"/>:<span className="wordmark">{value.storeName.toLowerCase()}</span>}
+    {value.logo?<StoreLogo logo={value.logo} storeName={value.storeName} logoSize={value.logoSize} className="logo-preview-mark"/>:<span className="wordmark">{value.storeName.toLowerCase()}</span>}
   </div>
+  {value.logo&&<label className="logo-size">Logo size <strong>{value.logoSize}%</strong>
+    <input type="range" min={40} max={220} step={5} value={value.logoSize} onChange={e=>setValue({...value,logoSize:Number(e.target.value)})}/>
+    <span className="logo-size-ends"><small>ছোট</small><small>বড়</small></span>
+    <small>Header, mobile menu ও footer-এর logo একসাথে বড়-ছোট হবে।</small>
+  </label>}
   <p className="studio-hint">{value.logo?'এই logo header, mobile menu ও footer-এ দেখা যাচ্ছে।':'Logo না দিলে store name-ই text হিসেবে দেখা যাবে।'} Wide ও transparent background-এর PNG/WebP ভালো কাজ করে।</p>
   <div className="row-actions">
     {value.logo&&<button type="button" className="studio-secondary danger" disabled={busy} onClick={()=>setValue({...value,logo:''})}><Trash2 size={16}/> Remove logo</button>}

@@ -21,7 +21,9 @@ export function normalizeSlides(slides:unknown,fallbackImage:string){
  */
 export const logoPath=z.union([z.literal(''),imagePath]);
 export const settingsSchema=z.object({
-  storeName:short,logo:logoPath,announcement:short,heroEyebrow:short,heroTitle:z.string().trim().min(1).max(160),heroAccent:short,heroDescription:z.string().trim().max(400),heroButton:short,heroImage:imagePath,
+  storeName:short,logo:logoPath,
+  /** Logo size as a percentage of the default, applied to header, menu and footer. */
+  logoSize:z.number().int().min(40).max(220).default(100),announcement:short,heroEyebrow:short,heroTitle:z.string().trim().min(1).max(160),heroAccent:short,heroDescription:z.string().trim().max(400),heroButton:short,heroImage:imagePath,
   // Ordered banner slides for the homepage slider. Normalized to at least one on save.
   heroSlides:z.array(heroSlideSchema).max(MAX_HERO_SLIDES).default([]),
   collectionTitle:short,featuredTitle:short,storyTitle:short,storyText:z.string().trim().max(600),
@@ -33,7 +35,7 @@ export const settingsSchema=z.object({
 });
 export type StoreSettings=z.infer<typeof settingsSchema>;
 export function defaultSettings():StoreSettings{return {
-  storeName:'Evelin',logo:'',announcement:'Thoughtfully made. Effortlessly worn.',heroEyebrow:'THE EVELIN COLLECTION',heroTitle:'Tradition,\nwith a modern',heroAccent:'point of view.',heroDescription:'Considered silhouettes. Quiet details.\nModest wear that feels like you.',heroButton:'Explore the collection',heroImage:'/images/editorial.webp',collectionTitle:'A collection for every you.',featuredTitle:'Meet your new favourites.',storyTitle:'Style that speaks softly.\nAnd says everything.',storyText:'We believe the best pieces don’t ask for attention.\nThey earn a place in your everyday.',contactPhone:'',contactEmail:'',storeAddress:'Dhaka, Bangladesh',
+  storeName:'Evelin',logo:'',logoSize:100,announcement:'Thoughtfully made. Effortlessly worn.',heroEyebrow:'THE EVELIN COLLECTION',heroTitle:'Tradition,\nwith a modern',heroAccent:'point of view.',heroDescription:'Considered silhouettes. Quiet details.\nModest wear that feels like you.',heroButton:'Explore the collection',heroImage:'/images/editorial.webp',collectionTitle:'A collection for every you.',featuredTitle:'Meet your new favourites.',storyTitle:'Style that speaks softly.\nAnd says everything.',storyText:'We believe the best pieces don’t ask for attention.\nThey earn a place in your everyday.',contactPhone:'',contactEmail:'',storeAddress:'Dhaka, Bangladesh',
   deliveryPolicy:'Delivery charges are shown at checkout. Delivery timelines will be confirmed before launch.',returnsPolicy:'Our exchange window, eligibility and return delivery charges will be published before launch.',privacyPolicy:'We collect your name, phone number and delivery address to process orders. Delivery details are shared with the courier when booking a parcel. Contact the store for data requests.',  storeLive:process.env.STORE_LIVE==='true',lowStockThreshold:3,zones:[{id:'dhaka',name:'Inside Dhaka',fee:80},{id:'outside',name:'Outside Dhaka',fee:130}],heroSlides:[{id:'slide-1',image:'/images/editorial.webp',alt:''}],version:1
 };}
 export function getSettings():StoreSettings{const row=db().prepare("SELECT value FROM settings WHERE key='store'").get();const stored:Record<string,unknown>=row?JSON.parse(String(row.value)):{};const merged={...defaultSettings(),...stored};return {...merged,heroSlides:normalizeSlides(merged.heroSlides,merged.heroImage)} as StoreSettings;}
