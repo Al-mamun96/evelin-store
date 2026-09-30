@@ -1,8 +1,8 @@
 import {z} from 'zod';
 import {db,audit,transaction} from './db.ts';
+import {MAX_HERO_SLIDES} from './shared.ts';
 export const imagePath=z.string().regex(/^\/(?:images\/[a-zA-Z0-9_-]+\.(?:webp|png|jpe?g)|media\/[a-f0-9-]+\.webp)$/,'Upload a photo or use an existing store photo.');
 const short=z.string().trim().min(1).max(180);
-export const MAX_HERO_SLIDES=8;
 export const heroSlideSchema=z.object({
   id:z.string().regex(/^[a-z0-9-]{1,40}$/,'Slide ID is invalid.'),
   image:imagePath,

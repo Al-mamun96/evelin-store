@@ -1,0 +1,20 @@
+# Keep the Docker build context small and prevent secrets or live store data
+# from ever being copied into an image layer.
+.git
+.gitignore
+node_modules
+.next
+data
+backups
+
+# Secrets. Only .env.example is ever committed; real values stay in Coolify
+# environment variables and must never be baked into an image.
+.env
+.env.local
+.env*.local
+
+# Not needed to build or run the app.
+docs
+*.md
+.vscode
+.idea

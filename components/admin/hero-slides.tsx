@@ -2,7 +2,7 @@
 import {useState} from 'react';
 import {ArrowUp,ArrowDown,Star,Trash2} from 'lucide-react';
 import {requestKey as newRequestKey} from '@/lib/request-key';
-import {MAX_HERO_SLIDES} from '@/lib/store-settings';
+import {MAX_HERO_SLIDES} from '@/lib/shared';
 import {ImageUpload} from './image-upload';
 export type HeroSlideValue={id:string;image:string;alt:string};
 const nextId=()=>'slide-'+newRequestKey().slice(0,8);
