@@ -1,20 +1,13 @@
-import { createRequire } from 'node:module';
+import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
-import type { DatabaseSync } from 'node:sqlite';
 import { products } from './catalog.ts';
-const require = createRequire(import.meta.url);
-// Turbopack does not support external Node.js built-in modules. Wrapping the
-// require call in new Function() produces an opaque string that Turbopack
-// cannot statically analyze, so `node:sqlite` is resolved natively by Node.js
-// at runtime instead of being processed by the bundler.
-const NativeDatabaseSync: typeof DatabaseSync = new Function('require', 'return require("node:sqlite").DatabaseSync')(require) as typeof DatabaseSync;
 let instance: DatabaseSync | undefined;
 export function db() {
   if (instance) return instance;
   const path = process.env.DATABASE_PATH || './data/evelin.sqlite';
   mkdirSync(dirname(path), { recursive: true });
-  instance = new NativeDatabaseSync(path);
+  instance = new DatabaseSync(path);
   instance.exec(`PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;
     CREATE TABLE IF NOT EXISTS inventory (product_id TEXT NOT NULL, size TEXT NOT NULL, stock INTEGER NOT NULL CHECK(stock>=0), PRIMARY KEY(product_id,size));
     CREATE TABLE IF NOT EXISTS orders (id TEXT PRIMARY KEY, request_key TEXT UNIQUE NOT NULL, customer TEXT NOT NULL, phone TEXT NOT NULL, address TEXT NOT NULL, zone TEXT NOT NULL, note TEXT NOT NULL, items TEXT NOT NULL, subtotal INTEGER NOT NULL, delivery INTEGER NOT NULL, total INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'Pending', created_at TEXT NOT NULL DEFAULT (datetime('now')));
