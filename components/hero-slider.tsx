@@ -4,7 +4,7 @@ import Link from 'next/link';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {ArrowUpRight,ChevronLeft,ChevronRight,Pause,Play} from 'lucide-react';
 import {SLIDE_INTERVAL} from '@/lib/shared';
-export type HeroSlide={id:string;image:string;alt:string};
+export type HeroSlide={id:string;image:string;mobileImage?:string;alt:string};
 export function HeroSlider({slides,caption,storeName}:{slides:HeroSlide[];caption:string;storeName:string}){
   const track=useRef<HTMLDivElement>(null),[active,setActive]=useState(0);
   const [playing,setPlaying]=useState(true);
@@ -28,9 +28,10 @@ export function HeroSlider({slides,caption,storeName}:{slides:HeroSlide[];captio
   const label=(index:number)=>`Slide ${index+1} of ${count}`;
   return <div className="hero-image hero-slider">
     <div className="hero-track" ref={track} role="group" aria-roledescription="carousel" aria-label="Collection highlights" tabIndex={0} onPointerDown={()=>setPlaying(false)} onKeyDown={e=>{if(e.key==='ArrowRight'){e.preventDefault();go(active+1);}else if(e.key==='ArrowLeft'){e.preventDefault();go(active-1);}}}>
-      {slides.map((slide,index)=><div className={'hero-slide'+(index===active?' current':'')} key={slide.id} role="group" aria-roledescription="slide" aria-label={label(index)} aria-hidden={index!==active}>
-        <Image src={slide.image} alt={slide.alt||storeName+' collection'} fill priority={index===0} loading={index===0?undefined:'lazy'} sizes="(max-width: 750px) 100vw, 60vw" draggable={false}/>
-      </div>)}
+      {slides.map((slide,index)=><div className={'hero-slide'+(index===active?' current':'')} data-has-mobile={!!slide.mobileImage} key={slide.id} role="group" aria-roledescription="slide" aria-label={label(index)} aria-hidden={index!==active}>
+         {slide.mobileImage&&<Image src={slide.mobileImage} alt={slide.alt||storeName+' collection'} fill sizes="100vw" loading={index===0?undefined:'lazy'} draggable={false} className="hero-slide-img-mobile"/>}
+         <Image src={slide.image} alt={slide.alt||storeName+' collection'} fill priority={index===0} loading={index===0?undefined:'lazy'} sizes="(max-width: 750px) 100vw, 60vw" draggable={false} className="hero-slide-img-desktop"/>
+       </div>)}
     </div>
     {count>1&&<>
       <button type="button" className="hero-arrow hero-arrow-prev" aria-label={'Previous slide'} disabled={active===0} onClick={()=>go(active-1)}><ChevronLeft size={20}/></button>

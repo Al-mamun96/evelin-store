@@ -4,7 +4,7 @@ import {ArrowUp,ArrowDown,Star,Trash2} from 'lucide-react';
 import {requestKey as newRequestKey} from '@/lib/request-key';
 import {MAX_HERO_SLIDES} from '@/lib/shared';
 import {ImageUpload} from './image-upload';
-export type HeroSlideValue={id:string;image:string;alt:string};
+export type HeroSlideValue={id:string;image:string;mobileImage:string;alt:string};
 const nextId=()=>'slide-'+newRequestKey().slice(0,8);
 const altPlaceholder='Collection photo';
 /** Ordered homepage banner slides. The first slide is the primary banner. */
@@ -17,8 +17,9 @@ export function HeroSlideManager({slides,onChange,onBusy}:{slides:HeroSlideValue
     {slides.length>1&&<div className="slide-list">{slides.map((slide,index)=><div className={'slide-row'+(slide.id===selected?' selected':'')} key={slide.id} onClick={()=>setSelected(slide.id)}>
       <img src={slide.image} alt=""/>
       <div className="slide-row-main"><strong>{index===0?'Main banner':'Slide '+(index+1)}{index===0&&<span className="studio-pill positive">FIRST</span>}</strong><small>{slide.image.split('/').pop()}</small>
-        <label className="slide-alt">Describe this photo<input maxLength={160} value={slide.alt} placeholder={altPlaceholder} onChange={e=>update(slide.id,{alt:e.target.value})}/></label>
-      </div>
+         <label className="slide-alt">Describe this photo<input maxLength={160} value={slide.alt} placeholder={altPlaceholder} onChange={e=>update(slide.id,{alt:e.target.value})}/></label>
+         {slide.id===selected&&<div className="slide-mobile-upload"><label>Mobile photo (portrait) ছবি{slide.mobileImage&&<button type="button" className="studio-icon danger" aria-label="Remove mobile photo" onClick={e=>{e.stopPropagation();update(slide.id,{mobileImage:''});}}><Trash2 size={14}/></button>}</label><ImageUpload value={slide.mobileImage||''} onChange={image=>update(slide.id,{mobileImage:image||''})} onBusy={onBusy}/><p className="studio-hint">একটি portrait (4:5) ছবি মোবাইল স্ক্রিনের জন্য। খালি রাখলে desktop ছবি সব জায়গায় ব্যবহার হবে।</p></div>}
+       </div>
       <div className="row-actions">
         {index!==0&&<button type="button" className="studio-icon" aria-label={'Move slide '+(index+1)+' to first position'} onClick={e=>{e.stopPropagation();move(index,-index);}}><Star size={17}/></button>}
         <button type="button" className="studio-icon" aria-label={'Move slide '+(index+1)+' up'} disabled={index===0} onClick={e=>{e.stopPropagation();move(index,-1);}}><ArrowUp size={17}/></button>
@@ -26,7 +27,7 @@ export function HeroSlideManager({slides,onChange,onBusy}:{slides:HeroSlideValue
         <button type="button" className="studio-icon danger" aria-label={'Remove slide '+(index+1)} disabled={slides.length===1} onClick={e=>{e.stopPropagation();const next=slides.filter(s=>s.id!==slide.id);onChange(next);setSelected(next[0]?.id||'');}}><Trash2 size={17}/></button>
       </div>
     </div>)}</div>}
-    {slides.length<MAX_HERO_SLIDES&&<ImageUpload value="" onChange={image=>onChange([...slides,{id:nextId(),image,alt:''}])} onBusy={onBusy}/>}
+    {slides.length<MAX_HERO_SLIDES&&<ImageUpload value="" onChange={image=>onChange([...slides,{id:nextId(),image,mobileImage:'',alt:''}])} onBusy={onBusy}/>}
     {slides.length>=MAX_HERO_SLIDES&&<p className="studio-hint">সর্বোচ্চ {MAX_HERO_SLIDES} টি slider ছবি যোগ করা যাবে। কোনো ছবি সরিয়ে নতুন ছবি যোগ করুন।</p>}
     {slides.length===1&&<p className="studio-hint">আরও ছবি যোগ করলে মোবাইলে slider চালু হবে।</p>}
   </>;

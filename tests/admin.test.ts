@@ -47,9 +47,10 @@ test('deleted products retain existing order records and cannot be bought',()=>{
 });
 test('hero slides are ordered, capped, and keep the first slide as the banner',()=>{
   const settings=getSettings();
-  const slides=[{id:'slide-a',image:'/images/editorial.webp',alt:'Front view'},{id:'slide-b',image:'/images/panjabi.webp',alt:''},{id:'slide-c',image:'/images/jubba.webp',alt:''}];
+  const slides=[{id:'slide-a',image:'/images/editorial.webp',mobileImage:'/images/mobile-a.webp',alt:'Front view'},{id:'slide-b',image:'/images/panjabi.webp',alt:''},{id:'slide-c',image:'/images/jubba.webp',alt:''}];
   const saved=saveSettings({...settings,heroSlides:slides});
   assert.equal(saved.heroSlides.length,3);assert.equal(saved.heroImage,slides[0].image);
+  assert.equal(saved.heroSlides[0].mobileImage,'/images/mobile-a.webp');assert.equal(saved.heroSlides[1].mobileImage,'');
   assert.deepEqual(getSettings().heroSlides.map((s:{id:string})=>s.id),['slide-a','slide-b','slide-c']);
   assert.equal(getSettings().heroSlides[0].alt,'Front view');
   const many=Array.from({length:9},(_,i)=>({id:'slide-'+i,image:'/images/editorial.webp',alt:''}));
@@ -57,7 +58,7 @@ test('hero slides are ordered, capped, and keep the first slide as the banner',(
 });
 test('an empty or missing slide list falls back to a single banner',()=>{
   const saved=saveSettings({...getSettings(),heroSlides:[],heroImage:'/images/panjabi.webp'});
-  assert.equal(saved.heroSlides.length,1);assert.equal(saved.heroSlides[0].image,'/images/panjabi.webp');
+  assert.equal(saved.heroSlides.length,1);assert.equal(saved.heroSlides[0].image,'/images/panjabi.webp');assert.equal(saved.heroSlides[0].mobileImage,'');
   assert.equal(getSettings().heroImage,'/images/panjabi.webp');
 });
 test('legacy settings without heroSlides keep their existing banner',()=>{
@@ -65,7 +66,14 @@ test('legacy settings without heroSlides keep their existing banner',()=>{
   db().prepare("INSERT INTO settings VALUES ('store',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(JSON.stringify(legacy));
   const migrated=getSettings();
   assert.equal(migrated.heroImage,'/images/katua.webp');
-  assert.equal(migrated.heroSlides.length,1);assert.equal(migrated.heroSlides[0].image,'/images/katua.webp');
+  assert.equal(migrated.heroSlides.length,1);assert.equal(migrated.heroSlides[0].image,'/images/katua.webp');assert.equal(migrated.heroSlides[0].mobileImage,'');
+});
+test('mobile images are optional and preserved through save',()=>{
+  const settings=getSettings();
+  const slides=[{id:'slide-1',image:'/images/editorial.webp',mobileImage:'/images/mobile-1.webp',alt:'A'},{id:'slide-2',image:'/images/panjabi.webp',alt:'B'}];
+  const saved=saveSettings({...settings,heroSlides:slides});
+  assert.equal(saved.heroSlides[0].mobileImage,'/images/mobile-1.webp');assert.equal(saved.heroSlides[1].mobileImage,'');
+  assert.equal(getSettings().heroSlides[0].mobileImage,'/images/mobile-1.webp');assert.equal(getSettings().heroSlides[1].mobileImage,'');
 });
 test('Steadfast credentials are encrypted and never exposed in settings',()=>{
  saveCourier({apiKey:'test-api-value',secretKey:'test-secret-value',baseUrl:'https://portal.steadfast.com.bd/api/v1',autoBook:false});
