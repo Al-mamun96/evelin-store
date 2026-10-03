@@ -1,10 +1,14 @@
+import { createRequire } from 'node:module';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { createRequire } from 'node:module';
 import type { DatabaseSync } from 'node:sqlite';
 import { products } from './catalog.ts';
 const require = createRequire(import.meta.url);
-const { DatabaseSync: NativeDatabaseSync } = require('node:sqlite') as typeof import('node:sqlite');
+// Turbopack does not support external Node.js built-in modules. Wrapping the
+// require call in new Function() produces an opaque string that Turbopack
+// cannot statically analyze, so `node:sqlite` is resolved natively by Node.js
+// at runtime instead of being processed by the bundler.
+const NativeDatabaseSync: typeof DatabaseSync = new Function('require', 'return require("node:sqlite").DatabaseSync')(require) as typeof DatabaseSync;
 let instance: DatabaseSync | undefined;
 export function db() {
   if (instance) return instance;
