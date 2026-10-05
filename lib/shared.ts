@@ -2,9 +2,12 @@
  * Client-safe constants.
  *
  * This module must not import anything server-only. `lib/store-settings.ts`
- * pulls in `node:sqlite`, so importing a value from it inside a `'use client'`
- * component pulls `node:sqlite` into the browser chunking context and fails the
- * Next.js build with "does not support external modules (request: node:sqlite)".
+ * pulls in `node:sqlite`; importing a value from it inside a `'use client'`
+ * component would pull `node:sqlite` into the browser chunking context.
+ * The build script uses `--webpack` (see package.json) to avoid Turbopack's
+ * inability to handle the `node:sqlite` external module, but the import
+ * boundary between client-safe constants and server-only settings remains
+ * necessary: only values are re-exported here, never the server module itself.
  * Types are erased at compile time and are safe; plain values are not.
  */
 

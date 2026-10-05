@@ -17,6 +17,9 @@ export const heroSlideSchema=z.object({
 export function normalizeSlides(slides:unknown,fallbackImage:string){
   const parsed=z.array(heroSlideSchema).max(MAX_HERO_SLIDES).safeParse(slides);
   const valid=parsed.success&&parsed.data.length?parsed.data:null;
+  if(valid){
+    valid[0].image=fallbackImage;
+  }
   return valid??[{id:'slide-1',image:fallbackImage,mobileImage:'',alt:''} as z.infer<typeof heroSlideSchema>];
 }
 /**
