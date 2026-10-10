@@ -125,4 +125,15 @@ test('defaults match the original hardcoded homepage and footer copy',()=>{
   assert.equal(d.footerHelpHeading,'Here to help');assert.equal(d.footerNoteTitle,'A wardrobe with meaning.');
   assert.equal(d.mobileFooterLinks[3].href,'/information#delivery');
 });
+test('product gallery and variations round-trip, and default for legacy rows',()=>{
+ const p=saveProduct({...sample(),gallery:['/images/panjabi.webp','/images/jubba.webp'],variations:[{id:'var-1',label:'Maroon',image:'/images/kabli.webp'}],showVariations:false});
+ const read=getProduct(p.id)!;
+ assert.deepEqual(read.gallery,['/images/panjabi.webp','/images/jubba.webp']);
+ assert.equal(read.variations!.length,1);assert.equal(read.variations![0].label,'Maroon');assert.equal(read.variations![0].image,'/images/kabli.webp');
+ assert.equal(read.showVariations,false);
+ const plain=getProduct(saveProduct(sample()).id)!;
+ assert.deepEqual(plain.gallery,[]);assert.deepEqual(plain.variations,[]);assert.equal(plain.showVariations,true);
+ assert.throws(()=>saveProduct({...sample(),gallery:['not-a-path']}));
+ assert.throws(()=>saveProduct({...sample(),variations:[{id:'var-1',label:'X',image:'not-a-path'}]}));
+});
 after(()=>{db().close();rmSync(dir,{recursive:true,force:true});});

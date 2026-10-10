@@ -3,6 +3,7 @@ import {getCategories} from '@/lib/categories';
 import {getSettings} from '@/lib/store-settings';
 import type {Metadata} from 'next';
 import { ShopProvider } from '@/components/shop-provider';
+import { QuickViewProvider } from '@/components/quick-view';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { MobileNav } from '@/components/mobile-nav';
@@ -15,4 +16,4 @@ export default function Layout({children}:{children:React.ReactNode}){const sett
    {/* Font families come from a fixed whitelist, so this URL cannot carry user input. */}
    <link rel="stylesheet" href={fontUrl(settings.headingFont,settings.bodyFont)}/>
    <style>{`:root{--serif:${fontStack(settings.headingFont,"Georgia,'Times New Roman',serif")};--sans:${fontStack(settings.bodyFont,'Arial,sans-serif')}}`}</style>
- </head><body><ShopProvider products={getProducts()} categories={getCategories()}><a className="skip-link" href="#main">Skip to content</a><Header settings={settings}/><main id="main">{children}</main><Footer settings={settings}/><MobileNav whatsapp={settings.whatsappNumber} phone={settings.contactPhone}/></ShopProvider></body></html>;}
+ </head><body><ShopProvider products={getProducts()} categories={getCategories()}><QuickViewProvider><a className="skip-link" href="#main">Skip to content</a><Header settings={settings}/><main id="main">{children}</main><Footer settings={settings}/><MobileNav whatsapp={settings.whatsappNumber} phone={settings.contactPhone}/></QuickViewProvider></ShopProvider></body></html>;}

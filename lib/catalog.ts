@@ -1,7 +1,10 @@
+export type Variation = {id: string; label: string; image: string};
 export type Product = {
   id: string; name: string; category: string; price: number; image: string;
   color: string; hex: string; description: string; fabric: string;
-  sizes: string[]; badge?: string; sizeGuide?: string; active?: boolean; deleted?: boolean; version?: number;
+  sizes: string[]; badge?: string; sizeGuide?: string;
+  gallery?: string[]; variations?: Variation[]; showVariations?: boolean;
+  active?: boolean; deleted?: boolean; version?: number;
 };
 export const categories = ['Panjabi', 'Jubba', 'Kabli', 'Abaya', 'Katua'];
 export const products: Product[] = [
