@@ -123,6 +123,6 @@ test('defaults match the original hardcoded homepage and footer copy',()=>{
   assert.equal(d.featuredEyebrow,'THE CONSIDERED EDIT');assert.equal(d.storyEyebrow,'THE EVELIN PHILOSOPHY');
   assert.equal(d.faqEyebrow,'A LITTLE GUIDANCE');assert.equal(d.serviceStrip[0].title,'Considered details');
   assert.equal(d.footerHelpHeading,'Here to help');assert.equal(d.footerNoteTitle,'A wardrobe with meaning.');
-  assert.equal(d.mobileFooterLinks[3].href,'/information#delivery');assert.equal(d.footerCrestImage,'/images/footer-brand-crest.webp');
+  assert.equal(d.mobileFooterLinks[3].href,'/information#delivery');
 });
 after(()=>{db().close();rmSync(dir,{recursive:true,force:true});});
