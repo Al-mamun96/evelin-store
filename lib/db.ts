@@ -1,7 +1,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { products } from './catalog.ts';
+import { products, categories } from './catalog.ts';
 let instance: DatabaseSync | undefined;
 export function db() {
   if (instance) return instance;
@@ -17,6 +17,7 @@ export function db() {
     CREATE TABLE IF NOT EXISTS stock_log (id INTEGER PRIMARY KEY, product_id TEXT NOT NULL, size TEXT NOT NULL, delta INTEGER NOT NULL, balance INTEGER NOT NULL, reason TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')));
     CREATE TABLE IF NOT EXISTS activity (id INTEGER PRIMARY KEY, action TEXT NOT NULL, target TEXT NOT NULL, detail TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT (datetime('now')));
     CREATE TABLE IF NOT EXISTS courier (order_id TEXT PRIMARY KEY, state TEXT NOT NULL, consignment_id TEXT, tracking_code TEXT, delivery_status TEXT, message TEXT NOT NULL DEFAULT '', updated_at TEXT NOT NULL DEFAULT (datetime('now')));`);
+  instance.exec('CREATE TABLE IF NOT EXISTS categories (id TEXT PRIMARY KEY, name TEXT NOT NULL, sort INTEGER NOT NULL DEFAULT 0, version INTEGER NOT NULL DEFAULT 1);');
   const columns = instance.prepare('PRAGMA table_info(orders)').all().map(row=>row.name);
   for (const [name,definition] of [['version','INTEGER NOT NULL DEFAULT 1'],['discount','INTEGER NOT NULL DEFAULT 0'],['advance','INTEGER NOT NULL DEFAULT 0'],['zone_label',"TEXT NOT NULL DEFAULT ''"],['source',"TEXT NOT NULL DEFAULT 'Website'"]]) {
     if(!columns.includes(name)) instance.exec(`ALTER TABLE orders ADD COLUMN ${name} ${definition}`);
@@ -30,6 +31,11 @@ export function db() {
         for (const size of product.sizes) insert.run(product.id,size,10);
       }
       instance.prepare("INSERT INTO settings VALUES ('catalog_seeded','true')").run();
+    }
+    if(!instance.prepare("SELECT 1 FROM settings WHERE key='categories_seeded'").get()) {
+      const insertCategory = instance.prepare('INSERT OR IGNORE INTO categories (id,name,sort) VALUES (?,?,?)');
+      categories.forEach((name,index)=>insertCategory.run(name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'category-'+index,name,index));
+      instance.prepare("INSERT INTO settings VALUES ('categories_seeded','true')").run();
     }
     instance.exec('COMMIT');
   }catch(error){instance.exec('ROLLBACK');throw error;}

@@ -1,0 +1,4 @@
+import {getSettings} from '@/lib/store-settings';
+import {Star} from 'lucide-react';
+export const metadata={title:'Customer Reviews'};
+export default function Page(){const s=getSettings();return <section className="section reviews-page"><div className="page-intro"><span className="eyebrow">IN THEIR WORDS</span><h1>Loved by our <em>customers.</em></h1><p>Real feedback from people who wear Evelin.</p></div>{s.reviews.length?<div className="review-grid">{s.reviews.map((r,i)=><article className="review-card" key={i}><div className="review-stars" aria-label={r.rating+' out of 5'}>{[1,2,3,4,5].map(n=><Star key={n} size={16} fill={n<=r.rating?'currentColor':'none'} strokeWidth={1.4}/>)}</div><p className="review-text">{r.text}</p><strong className="review-name">{r.name}</strong></article>)}</div>:<div className="empty-state"><h2>No reviews yet.</h2><p>Customer reviews will appear here soon.</p></div>}</section>;}

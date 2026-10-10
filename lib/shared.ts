@@ -73,3 +73,15 @@ export const fontUrl=(heading:string,body:string)=>{
   const family=(name:string)=>name.replace(/ /g,'+');
   return `https://fonts.googleapis.com/css2?family=${family(heading)}:wght@400;500;600;700&family=${family(body)}:wght@400;500;600;700&display=swap`;
 };
+
+/**
+ * Builds a wa.me chat link from a WhatsApp/phone number, normalising Bangladesh
+ * numbers to the 88 country code. Returns an empty string when no number is set.
+ */
+export function whatsappLink(number:string|undefined|null):string{
+  let digits=(number||'').replace(/\D/g,'');
+  if(digits.startsWith('00'))digits=digits.slice(2);
+  else if(digits.startsWith('0'))digits='88'+digits;
+  else if(digits&&!digits.startsWith('88'))digits='88'+digits;
+  return digits?'https://wa.me/'+digits:'';
+}

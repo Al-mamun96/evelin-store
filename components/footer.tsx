@@ -1,5 +1,5 @@
 import {Fragment} from 'react';
-import {getProducts} from '@/lib/products';
+import {getCategories} from '@/lib/categories';
 import Link from 'next/link';
 import type {StoreSettings} from '@/lib/store-settings';
 import { ArrowUpRight,PackageCheck,Truck,ShieldCheck,Mail } from 'lucide-react';
@@ -9,7 +9,7 @@ import { BangladeshMap } from './bangladesh-map';
 const serviceIcons=[PackageCheck,Truck,ShieldCheck];
 
 export function Footer({settings}:{settings:StoreSettings}){
-  const categories=[...new Set(getProducts().map(p=>p.category))];
+  const categories=getCategories().map(c=>c.name);
   const {facebook,instagram,tiktok,socialX,contactEmail}=settings;
   const mobileTagline=settings.mobileFooterTagline.split('\n');
 
