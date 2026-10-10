@@ -31,8 +31,8 @@
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important;animation:none!important}}
 /* Mobile: light brand-colour overlay header with primary-colour content. */
 @media(max-width:650px){.header{background:rgba(87,39,53,.2);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:0;color:var(--wine)}}
-/* Mobile: translucent brand overlay drawer (fades the page through), matching the header. */
-@media(max-width:850px){.menu-dialog{background:rgba(87,39,53,.2);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:var(--wine)}.menu-dialog nav a{border-bottom-color:#ffffff5c}.menu-dialog p{color:var(--wine)}.menu-dialog::backdrop{background:#21181f45;backdrop-filter:blur(2px)}}
+/* Mobile: translucent brand overlay drawer (fades the page through) with white text. */
+@media(max-width:850px){.menu-dialog{background:rgba(87,39,53,.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:#fff}.menu-dialog nav a{border-bottom-color:#ffffff40}.menu-dialog p{color:#ffffffe0}.menu-dialog .wordmark{color:#fff}.menu-dialog::backdrop{background:#21181f45;backdrop-filter:blur(2px)}}
 .mobile-footer{display:none}
 
 /* Evelin Studio — a separate, touch-friendly management workspace. */
