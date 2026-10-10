@@ -64,9 +64,17 @@ export function Footer({settings}:{settings:StoreSettings}){
         {/* Dedicated Mobile View Footer (Styled as requested) */}
         <div className="mobile-footer">
           <div className="mobile-footer-crest">
-            <svg className="crest-art" viewBox="0 0 400 410" role="img" aria-label={`${settings.storeName} crest`}>
-              <g transform="translate(120 16) scale(0.63)"><BangladeshMap/></g>
-              <g transform="translate(16 40) rotate(-26) scale(2.2)">
+            <svg className="crest-art" viewBox="0 -9 265 351" role="img" aria-label={`${settings.storeName} crest`}>
+              <defs>
+                <mask id="crest-map-outline" maskContentUnits="userSpaceOnUse">
+                  <rect x="-200" y="-200" width="900" height="1000" fill="#fff"/>
+                  <g fill="#000"><BangladeshMap/></g>
+                </mask>
+              </defs>
+              <g transform="translate(30 30) scale(0.5)" mask="url(#crest-map-outline)" fill="none" stroke="#ffffff" strokeWidth={16} strokeLinejoin="round" strokeLinecap="round">
+                <BangladeshMap/>
+              </g>
+              <g transform="translate(10 22) rotate(-26) scale(1.5)">
                 <rect x="0" y="0" width="32" height="10" rx="4" fill="#efe4d8"/>
                 <rect x="0" y="44" width="32" height="10" rx="4" fill="#efe4d8"/>
                 <rect x="4" y="8" width="24" height="38" rx="2" fill="#4f2231"/>
