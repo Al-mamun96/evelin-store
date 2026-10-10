@@ -8,7 +8,7 @@ const dir=mkdtempSync(join(tmpdir(),'evelin-admin-'));
 process.env.DATABASE_PATH=join(dir,'store.sqlite');process.env.SESSION_SECRET='local-test-only-secret-with-at-least-32-characters';
 const {db,inventory}=await import('../lib/db.ts');
 const {saveProduct,archiveProduct,getProduct,getProducts,adjustStock}=await import('../lib/products.ts');
-const {getSettings,saveSettings}=await import('../lib/store-settings.ts');
+const {getSettings,saveSettings,defaultSettings}=await import('../lib/store-settings.ts');
 const {createOrder,editOrder,getOrder,setOrderStatus}=await import('../lib/orders.ts');
 const {saveCourier,courierSettings,bookCourier,syncCourier}=await import('../lib/steadfast.ts');
 const sample=()=>({name:'Test Panjabi',category:'Panjabi',price:2000,image:'/images/panjabi.webp',color:'White',hex:'#ffffff',description:'Testing a sample product',fabric:'Cotton',sizes:['M','L'],active:true,initialStock:20});
@@ -88,5 +88,41 @@ test('courier booking sends COD once, locks editing, and syncs delivery',async()
 test('uncertain courier timeout blocks retries and edits',async()=>{
  const p=saveProduct(sample()),o=createOrder(input(p.id),true);setOrderStatus(o.id,'Confirmed');const original=globalThis.fetch;globalThis.fetch=async()=>{throw new Error('timeout');};
  try{await assert.rejects(()=>bookCourier(o.id));assert.equal(getOrder(o.id)!.courier?.state,'unknown');await assert.rejects(()=>bookCourier(o.id));assert.throws(()=>editOrder(o.id,{...input(p.id),version:getOrder(o.id)!.version}));}finally{globalThis.fetch=original;}
+});
+test('homepage and footer content round-trips through settings',()=>{
+  const s=getSettings();
+  const saved=saveSettings({...s,heroFootnoteLeft:'A',heroFootnoteRight:'B',heroButtonUrl:'/shop/new',collectionsEyebrow:'EYE',productCardCta:'See more',faqItems:[{question:'Q1?',answer:'A1'}],serviceStrip:[{title:'T1',text:'X1'},{title:'T2',text:'X2'},{title:'T3',text:'X3'}],footerHelpLinks:[{label:'L1',href:'/a'},{label:'L2',href:'/b'},{label:'L3',href:'/c'},{label:'L4',href:'/d'}],mobileFooterLinks:[{label:'M1',href:'/1'},{label:'M2',href:'/2'},{label:'M3',href:'/3'},{label:'M4',href:'/4'}],footerTagline:'Custom tagline'});
+  const read=getSettings();
+  assert.equal(read.heroFootnoteLeft,'A');assert.equal(read.heroFootnoteRight,'B');assert.equal(read.heroButtonUrl,'/shop/new');
+  assert.equal(read.collectionsEyebrow,'EYE');assert.equal(read.productCardCta,'See more');assert.equal(read.footerTagline,'Custom tagline');
+  assert.equal(read.faqItems.length,1);assert.equal(read.faqItems[0].question,'Q1?');assert.equal(read.faqItems[0].answer,'A1');
+  assert.equal(read.serviceStrip[0].title,'T1');assert.equal(read.footerHelpLinks[3].href,'/d');assert.equal(read.mobileFooterLinks[0].label,'M1');
+  assert.equal(saved.version,s.version+1);
+});
+test('legacy store row without new keys falls back to defaults',()=>{
+  const legacy:Record<string,unknown>={...getSettings()};
+  for(const key of ['footerTagline','heroFootnoteLeft','serviceStrip','footerHelpLinks','mobileFooterLinks','faqItems','navHomeLabel','productCardCta'])delete legacy[key];
+  db().prepare("INSERT INTO settings VALUES ('store',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(JSON.stringify(legacy));
+  const read=getSettings();
+  assert.equal(read.footerTagline,'Rooted in tradition.\nDesigned for the way you live.');
+  assert.equal(read.heroFootnoteLeft,'01 — EVERYDAY ELEGANCE');
+  assert.equal(read.serviceStrip.length,3);assert.equal(read.footerHelpLinks.length,4);assert.equal(read.mobileFooterLinks.length,4);assert.equal(read.faqItems.length,4);
+  assert.equal(read.navHomeLabel,'Home');assert.equal(read.productCardCta,'Explore piece');
+});
+test('new homepage and footer fields are validated',()=>{
+  const s=getSettings();
+  assert.throws(()=>saveSettings({...s,heroButtonUrl:'shop'}));
+  assert.throws(()=>saveSettings({...s,serviceStrip:[{title:'Only one',text:'x'}]}));
+  assert.throws(()=>saveSettings({...s,footerHelpLinks:[{label:'L',href:'/a'}]}));
+  assert.throws(()=>saveSettings({...s,faqItems:Array.from({length:9},(_,i)=>({question:'Q'+i,answer:'A'+i}))}));
+});
+test('defaults match the original hardcoded homepage and footer copy',()=>{
+  const d=defaultSettings();
+  assert.equal(d.heroFootnoteLeft,'01 — EVERYDAY ELEGANCE');assert.equal(d.heroFootnoteRight,'EST. 2026');
+  assert.equal(d.heroSlideCaption,'THE ART OF UNDERSTATEMENT');assert.equal(d.collectionsEyebrow,'FIND YOUR EVERYDAY');
+  assert.equal(d.featuredEyebrow,'THE CONSIDERED EDIT');assert.equal(d.storyEyebrow,'THE EVELIN PHILOSOPHY');
+  assert.equal(d.faqEyebrow,'A LITTLE GUIDANCE');assert.equal(d.serviceStrip[0].title,'Considered details');
+  assert.equal(d.footerHelpHeading,'Here to help');assert.equal(d.footerNoteTitle,'A wardrobe with meaning.');
+  assert.equal(d.mobileFooterLinks[3].href,'/information#delivery');assert.equal(d.footerCrestImage,'/images/footer-brand-crest.webp');
 });
 after(()=>{db().close();rmSync(dir,{recursive:true,force:true});});

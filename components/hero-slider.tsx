@@ -5,7 +5,7 @@ import {useCallback,useEffect,useRef,useState} from 'react';
 import {ArrowUpRight,ChevronLeft,ChevronRight,Pause,Play} from 'lucide-react';
 import {SLIDE_INTERVAL} from '@/lib/shared';
 export type HeroSlide={id:string;image:string;mobileImage?:string;alt:string};
-export function HeroSlider({slides,caption,storeName}:{slides:HeroSlide[];caption:string;storeName:string}){
+export function HeroSlider({slides,caption,captionUrl='/shop',storeName}:{slides:HeroSlide[];caption:string;captionUrl?:string;storeName:string}){
   const track=useRef<HTMLDivElement>(null),[active,setActive]=useState(0);
   const [playing,setPlaying]=useState(true);
   const count=slides.length;
@@ -39,6 +39,6 @@ export function HeroSlider({slides,caption,storeName}:{slides:HeroSlide[];captio
       <button type="button" className="hero-playpause" aria-label={playing?'Pause automatic slideshow':'Play automatic slideshow'} onClick={()=>setPlaying(p=>!p)}>{playing?<Pause size={13}/>:<Play size={13}/>}</button>
       <div className="hero-dots" role="tablist" aria-label="Choose slide">{slides.map((slide,index)=><button type="button" role="tab" key={slide.id} className={'hero-dot'+(index===active?' active':'')} aria-selected={index===active} aria-label={label(index)} onClick={()=>go(index)}/>)}</div>
     </>}
-    <div className="image-caption"><span>{caption}</span><Link href="/shop" aria-label="Explore the collection"><ArrowUpRight size={23}/></Link></div>
+    <div className="image-caption"><span>{caption}</span><Link href={captionUrl} aria-label="Explore the collection"><ArrowUpRight size={23}/></Link></div>
   </div>;
 }
