@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type {StoreSettings} from '@/lib/store-settings';
 import { ArrowUpRight,PackageCheck,Truck,ShieldCheck,Mail } from 'lucide-react';
 import { StoreLogo } from './store-logo';
+import { BangladeshMap } from './bangladesh-map';
 
 const serviceIcons=[PackageCheck,Truck,ShieldCheck];
 
@@ -63,8 +64,9 @@ export function Footer({settings}:{settings:StoreSettings}){
         {/* Dedicated Mobile View Footer (Styled as requested) */}
         <div className="mobile-footer">
           <div className="mobile-footer-crest">
-            <svg className="crest-art" viewBox="0 0 200 200" role="img" aria-label={`${settings.storeName} crest`}>
-              <g transform="translate(28 22) rotate(-26)">
+            <svg className="crest-art" viewBox="0 0 400 410" role="img" aria-label={`${settings.storeName} crest`}>
+              <g transform="translate(120 16) scale(0.63)"><BangladeshMap/></g>
+              <g transform="translate(16 40) rotate(-26) scale(2.2)">
                 <rect x="0" y="0" width="32" height="10" rx="4" fill="#efe4d8"/>
                 <rect x="0" y="44" width="32" height="10" rx="4" fill="#efe4d8"/>
                 <rect x="4" y="8" width="24" height="38" rx="2" fill="#4f2231"/>
@@ -79,8 +81,6 @@ export function Footer({settings}:{settings:StoreSettings}){
                 </g>
                 <rect x="14" y="0" width="4" height="54" fill="#f4ece2"/>
               </g>
-              <path d="M52 48 C 66 40 78 44 88 56" fill="none" stroke="#f4ece2" stroke-width="1.5" stroke-linecap="round"/>
-              <path d="M108 50 C 118 42 134 42 144 50 L156 60 C166 68 172 66 178 76 L186 92 C190 104 184 118 172 124 L160 130 C154 134 156 146 162 156 L168 168 C172 180 160 190 148 188 L132 186 C122 184 116 176 112 166 L104 150 C98 138 88 132 78 128 L68 124 C60 118 58 104 66 94 L76 82 C82 72 80 58 90 54 Z" fill="none" stroke="#f4ece2" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
             </svg>
             <span className="crest-wordmark">{settings.storeName}</span>
             <span className="crest-tagline">Premium Panjabi Collection</span>
