@@ -4,7 +4,6 @@ import Link from 'next/link';
 import type {StoreSettings} from '@/lib/store-settings';
 import { ArrowUpRight,PackageCheck,Truck,ShieldCheck,Mail } from 'lucide-react';
 import { StoreLogo } from './store-logo';
-import { BangladeshMap } from './bangladesh-map';
 
 const serviceIcons=[PackageCheck,Truck,ShieldCheck];
 
@@ -64,34 +63,7 @@ export function Footer({settings}:{settings:StoreSettings}){
         {/* Dedicated Mobile View Footer (Styled as requested) */}
         <div className="mobile-footer">
           <div className="mobile-footer-crest">
-            <svg className="crest-art" viewBox="0 -9 265 351" role="img" aria-label={`${settings.storeName} crest`}>
-              <defs>
-                <mask id="crest-map-outline" maskContentUnits="userSpaceOnUse">
-                  <rect x="-200" y="-200" width="900" height="1000" fill="#fff"/>
-                  <g fill="#000"><BangladeshMap/></g>
-                </mask>
-              </defs>
-              <g transform="translate(30 30) scale(0.5)" mask="url(#crest-map-outline)" fill="none" stroke="#ffffff" strokeWidth={16} strokeLinejoin="round" strokeLinecap="round">
-                <BangladeshMap/>
-              </g>
-              <g transform="translate(10 22) rotate(-26) scale(1.5)">
-                <rect x="0" y="0" width="32" height="10" rx="4" fill="#efe4d8"/>
-                <rect x="0" y="44" width="32" height="10" rx="4" fill="#efe4d8"/>
-                <rect x="4" y="8" width="24" height="38" rx="2" fill="#4f2231"/>
-                <g stroke="#8a4256" stroke-width="1.3" stroke-linecap="round">
-                  <line x1="5" y1="14" x2="27" y2="14"/>
-                  <line x1="5" y1="19" x2="27" y2="19"/>
-                  <line x1="5" y1="24" x2="27" y2="24"/>
-                  <line x1="5" y1="29" x2="27" y2="29"/>
-                  <line x1="5" y1="34" x2="27" y2="34"/>
-                  <line x1="5" y1="39" x2="27" y2="39"/>
-                  <line x1="5" y1="44" x2="27" y2="44"/>
-                </g>
-                <rect x="14" y="0" width="4" height="54" fill="#f4ece2"/>
-              </g>
-            </svg>
-            <span className="crest-wordmark">{settings.storeName}</span>
-            <span className="crest-tagline">Premium Panjabi Collection</span>
+            <img className="crest-art" src="/images/footer-brand-crest.webp" alt={`${settings.storeName} crest`} width={350} height={435}/>
           </div>
 
           <p className="mobile-footer-tagline">
