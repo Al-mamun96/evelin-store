@@ -37,6 +37,28 @@ export function db() {
       categories.forEach((name,index)=>insertCategory.run(name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'category-'+index,name,index));
       instance.prepare("INSERT INTO settings VALUES ('categories_seeded','true')").run();
     }
+    // One-time move of the footer/mobile help links from the old /information
+    // anchors to the dedicated content pages. Links an admin customised are left
+    // alone because only the exact known hrefs are remapped.
+    if(!instance.prepare("SELECT 1 FROM settings WHERE key='content_links_v2'").get()) {
+      const row = instance.prepare("SELECT value FROM settings WHERE key='store'").get() as {value:string}|undefined;
+      if(row){
+        const remap:Record<string,string>={'/information#delivery':'/delivery','/information#contact':'/contact','/information#privacy':'/privacy','/information':'/about'};
+        const store = JSON.parse(row.value) as Record<string,unknown>;
+        for(const key of ['footerHelpLinks','mobileFooterLinks']){
+          const list = store[key];
+          if(Array.isArray(list)) store[key]=list.map(item=>{
+            if(item&&typeof item==='object'&&typeof (item as {href?:unknown}).href==='string'){
+              const href=(item as {href:string}).href;
+              return {...item,href:remap[href]??href};
+            }
+            return item;
+          });
+        }
+        instance.prepare("UPDATE settings SET value=? WHERE key='store'").run(JSON.stringify(store));
+      }
+      instance.prepare("INSERT INTO settings VALUES ('content_links_v2','true')").run();
+    }
     instance.exec('COMMIT');
   }catch(error){instance.exec('ROLLBACK');throw error;}
   return instance;

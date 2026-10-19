@@ -123,7 +123,7 @@ test('defaults match the original hardcoded homepage and footer copy',()=>{
   assert.equal(d.featuredEyebrow,'THE CONSIDERED EDIT');assert.equal(d.storyEyebrow,'THE EVELIN PHILOSOPHY');
   assert.equal(d.faqEyebrow,'A LITTLE GUIDANCE');assert.equal(d.serviceStrip[0].title,'Considered details');
   assert.equal(d.footerHelpHeading,'Here to help');assert.equal(d.footerNoteTitle,'A wardrobe with meaning.');
-  assert.equal(d.mobileFooterLinks[3].href,'/information#delivery');
+  assert.equal(d.mobileFooterLinks[3].href,'/delivery');
 });
 test('product gallery and variations round-trip, and default for legacy rows',()=>{
  const p=saveProduct({...sample(),gallery:['/images/panjabi.webp','/images/jubba.webp'],variations:[{id:'var-1',label:'Maroon',image:'/images/kabli.webp'}],showVariations:false});

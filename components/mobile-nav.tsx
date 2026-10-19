@@ -14,7 +14,7 @@ function WhatsAppIcon({size=20}:{size?:number;strokeWidth?:number}){
 /** Opens a WhatsApp chat, or the contact section when no number is configured. */
 function whatsappHref(whatsapp?:string,phone?:string){
   const link=whatsappLink(whatsapp||phone);
-  return link?link+'?text='+encodeURIComponent("Hi! I'd like to know more about your collection."):'/information#contact';
+  return link?link+'?text='+encodeURIComponent("Hi! I'd like to know more about your collection."):'/contact';
 }
 /**
  * Fixed bottom navigation for small screens, where the header menu is behind a
