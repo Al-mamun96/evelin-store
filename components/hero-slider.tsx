@@ -39,6 +39,6 @@ export function HeroSlider({slides,caption,captionUrl='/shop',ctaLabel,ctaUrl,st
       <button type="button" className="hero-playpause" aria-label={playing?'Pause automatic slideshow':'Play automatic slideshow'} onClick={()=>setPlaying(p=>!p)}>{playing?<Pause size={13}/>:<Play size={13}/>}</button>
       <div className="hero-dots" role="tablist" aria-label="Choose slide">{slides.map((slide,index)=><button type="button" role="tab" key={slide.id} className={'hero-dot'+(index===active?' active':'')} aria-selected={index===active} aria-label={label(index)} onClick={()=>go(index)}/>)}</div>
     </>}
-    <Link className="button hero-button hero-banner-button" href={ctaUrl}>{ctaLabel} <ArrowUpRight size={16}/></Link><div className="image-caption"><span>{caption}</span><Link href={captionUrl} aria-label="Explore the collection"><ArrowUpRight size={23}/></Link></div>
+    <Link className="button hero-button hero-banner-button" href={ctaUrl}>Shop Now</Link><div className="image-caption"><span>{caption}</span><Link href={captionUrl} aria-label="Explore the collection"><ArrowUpRight size={23}/></Link></div>
   </div>;
 }
