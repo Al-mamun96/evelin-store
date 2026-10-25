@@ -1,3 +1,4 @@
+import {getImageProps} from 'next/image';
 /**
  * Store logo with a text fallback.
  *
@@ -12,6 +13,10 @@
  * proportions identical.
  */
 export function StoreLogo({logo,storeName,logoSize=100,className='wordmark',label}:{logo:string;storeName:string;logoSize?:number;className?:string;label?:string}){
-  if(logo)return <img className={className+' logo'} src={logo} alt={label||storeName} width={240} height={60} style={{'--logo-scale':logoSize/100} as React.CSSProperties}/>;
+  if(logo){
+    const props={src:logo,alt:label||storeName,width:240,height:60};
+    const image=logo.startsWith('/')&&!logo.startsWith('//')?getImageProps({...props,sizes:Math.ceil(240*logoSize/100)+'px'}).props:props;
+    return <img {...image} className={className+' logo'} style={{'--logo-scale':logoSize/100} as React.CSSProperties}/>;
+  }
   return <span className={className}>{storeName.toLowerCase()}</span>;
 }

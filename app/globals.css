@@ -144,7 +144,8 @@ body:has(.studio-root)>.announcement,body:has(.studio-root) .header,body:has(.st
 .category-guidance{margin-top:32px}
 @media(max-width:650px){.hero-copy h1{font-size:28px;margin:0 0 14px}.hero-copy p{margin-bottom:12px}.hero-copy .hero-context{margin-bottom:0}}
 /* Measured Lighthouse issues: preserve the theme while improving readable contrast and tap areas. */
-.hero-copy p{color:#665e59}
+:root{--muted:#706863}
+.hero-copy p,.hero-footnote{color:#665e59}
 .image-caption>span{background:#572735e6;padding:4px 8px;border-radius:3px}
 .mobile-footer-copy{color:#ffffffb3}
 .hero-dots{bottom:70px;gap:6px}
