@@ -15,7 +15,7 @@
 export const MAX_HERO_SLIDES=8;
 
 /** Milliseconds each slide stays on screen when the slider autoplays. */
-export const SLIDE_INTERVAL=5000;
+export const SLIDE_INTERVAL=3000;
 
 /**
  * Google Fonts offered for storefront typography. Every entry must be a real
