@@ -70,8 +70,12 @@ export function safeFont(value:unknown,fallback:string):string{
 /** Font stacks are built from whitelisted names only, never from raw input. */
 export const fontStack=(family:string,fallback:string)=>`'${family}',${fallback}`;
 export const fontUrl=(heading:string,body:string)=>{
-  const family=(name:string)=>name.replace(/ /g,'+');
-  return `https://fonts.googleapis.com/css2?family=${family(heading)}:wght@400;500;600;700&family=${family(body)}:wght@400;500;600;700&display=swap`;
+  // Keep Inter for the existing menu typography, but load each family only once.
+  const families=[...new Set([heading,body,'Inter'])].map(name=>{
+    const weights=['Italiana','DM Serif Display'].includes(name)?'400':name==='DM Sans'?'400;450;500;550;600;650;700':'400;500;600;700';
+    return 'family='+name.replace(/ /g,'+')+':wght@'+weights;
+  });
+  return 'https://fonts.googleapis.com/css2?'+families.join('&')+'&display=swap';
 };
 
 /**

@@ -5,7 +5,7 @@ export function breadcrumbs(origin:string,items:{name:string;path:string}[]){
  return {'@context':'https://schema.org','@type':'BreadcrumbList',itemListElement:items.map((item,index)=>({'@type':'ListItem',position:index+1,name:item.name,item:new URL(item.path,origin).href}))};
 }
 export function businessGraph(origin:string,s:StoreSettings,path='/',title=s.storeName){
- const sameAs=[s.facebook,s.instagram,s.tiktok,s.socialX].filter(value=>/^https?:\/\//.test(value));
+ const sameAs=[...new Set([s.facebook,s.instagram,s.tiktok,s.socialX].filter(value=>/^https?:\/\//.test(value)))];
  return {'@context':'https://schema.org','@graph':[
  {'@type':'Organization','@id':origin+'/#organization',name:s.storeName,url:origin+'/',
  ...(s.logo?{logo:new URL(s.logo,origin).href}:{}),

@@ -1,3 +1,4 @@
+import {publicReviews} from '../lib/reviews.ts';
 import {catalogSummary,categoryUrl,normalizeShopParams,relatedProducts} from '../lib/seo-content.ts';
 import {products} from '../lib/catalog.ts';
 import {productSchema,breadcrumbs} from '../lib/structured-data.ts';
@@ -48,4 +49,14 @@ test('breadcrumbs use absolute canonical URLs',()=>{
  const schema=breadcrumbs('https://example.com',[{name:'Home',path:'/'},{name:'Panjabi',path:categoryUrl('Panjabi')}]);
  assert.equal(schema.itemListElement[1].item,'https://example.com/shop?category=Panjabi');
  assert.equal(schema.itemListElement[1].position,2);
+});
+test('confirmed live store remains indexable while checkout is paused',()=>{
+ assert.equal(isIndexable(false,'','https://evelinbd.site'),true);
+ assert.equal(isIndexable(false,'false','https://evelinbd.site'),false);
+ assert.equal(isIndexable(false,'','https://staging.example.com'),false);
+});
+test('old review starter is hidden without changing stored reviews',()=>{
+ const reviews=[{name:'Customer name',rating:5,text:'Loved the fit and finish.'},{name:'Actual Reviewer',rating:4,text:'My submitted feedback.'}];
+ assert.deepEqual(publicReviews(reviews),[reviews[1]]);
+ assert.equal(reviews.length,2);
 });

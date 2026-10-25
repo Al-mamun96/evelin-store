@@ -6,5 +6,7 @@ export function seoDescription(text:string){return text.replace(/\s+/g,' ').trim
 export function serializeJsonLd(value:unknown){return JSON.stringify(value).replace(/</g,'\\u003c');}
 export function hasAvailableSize(sizes:string[],stock:{size:string;stock:number}[]){return stock.some(row=>sizes.includes(row.size)&&row.stock>0);}
 
-// Explicit production indexing control can remain enabled while orders are paused.
-export function isIndexable(storeLive:boolean,override=process.env.SEO_INDEXABLE){return override==='true'||(override!=='false'&&storeLive);}
+// Confirmed by the owner; never infer the public origin from an untrusted request host.
+export const PUBLIC_STORE_ORIGIN='https://evelinbd.site';
+// Public catalog indexing is independent of taking orders on the confirmed live site.
+export function isIndexable(storeLive:boolean,override=process.env.SEO_INDEXABLE,origin=siteOrigin()){if(override==='false')return false;if(override==='true')return true;return origin===PUBLIC_STORE_ORIGIN||storeLive;}

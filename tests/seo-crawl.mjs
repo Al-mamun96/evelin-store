@@ -51,7 +51,7 @@ try{
  for(const url of urls)assert.ok(url===origin+'/'||discovered.has(url),'Orphan URL: '+url);
  const titles=[...htmlPages.values()].map(html=>html.match(/<title>(.*?)<\/title>/)?.[1]);assert.equal(new Set(titles).size,titles.length,'Duplicate titles');
  const descriptions=[...htmlPages.values()].map(html=>html.match(/<meta name="description" content="([^"]*)"/)?.[1]);assert.equal(new Set(descriptions).size,descriptions.length,'Duplicate descriptions');
- for(const path of ['/cart','/checkout','/account','/admin','/shop?q=panjabi','/shop?category=Panjabi&sort=price','/shop?category=Panjabi&category=Abaya']){
+ for(const path of ['/cart','/checkout','/account','/reviews','/admin','/shop?q=panjabi','/shop?category=Panjabi&sort=price','/shop?category=Panjabi&category=Abaya']){
   const {r,html}=await read(path);assert.equal(r.status,200);assert.match(html,/<meta name="robots" content="[^"]*noindex/);
  }
  for(const path of ['/shop?category=Unknown','/products/does-not-exist','/missing-page'])assert.equal((await read(path)).r.status,404,path);
