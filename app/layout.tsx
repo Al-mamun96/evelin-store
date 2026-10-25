@@ -1,3 +1,4 @@
+import {siteOrigin,seoDescription} from '@/lib/seo';
 import {getProducts} from '@/lib/products';
 import {getCategories} from '@/lib/categories';
 import {getSettings} from '@/lib/store-settings';
@@ -9,7 +10,7 @@ import { Footer } from '@/components/footer';
 import { MobileNav } from '@/components/mobile-nav';
 import { fontStack, fontUrl } from '@/lib/shared';
 import './globals.css';
-export function generateMetadata():Metadata{const settings=getSettings();return {metadataBase:new URL(process.env.NEXT_PUBLIC_SITE_URL||'http://localhost:3000'),title:{default:settings.storeName+' — Timeless Modest Wear',template:'%s | '+settings.storeName},description:settings.heroDescription,robots:{index:settings.storeLive,follow:settings.storeLive}};}
+export function generateMetadata():Metadata{const settings=getSettings();return {metadataBase:siteOrigin()?new URL(siteOrigin()!):undefined,title:{default:settings.storeName+' — Timeless Modest Wear',template:'%s | '+settings.storeName},description:seoDescription(settings.heroDescription),robots:{index:settings.storeLive&&!!siteOrigin(),follow:true}};}
 export const dynamic='force-dynamic';
 export default function Layout({children}:{children:React.ReactNode}){const settings=getSettings();
  return <html lang="en"><head>

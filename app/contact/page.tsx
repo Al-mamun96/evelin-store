@@ -1,7 +1,8 @@
+import {pageMetadata} from '@/lib/page-metadata';
 import {Fragment} from 'react';
 import {getSettings} from '@/lib/store-settings';
 import {whatsappLink} from '@/lib/shared';
-export const metadata={title:'Contact Us'};
+export function generateMetadata(){const s=getSettings();return pageMetadata('/contact',s.contactTitle,s.contactBody);}
 export default function Page(){
   const s=getSettings(),chat=whatsappLink(s.whatsappNumber||s.contactPhone);
   const socials=([['Facebook',s.facebook],['Instagram',s.instagram],['TikTok',s.tiktok],['X (Twitter)',s.socialX]] as const).filter(([,href])=>href);

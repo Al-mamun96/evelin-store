@@ -19,6 +19,20 @@ try{
  for(const path of ['orders','products','settings','inventory','courier','upload'])assert.equal((await request('/api/admin/'+path,{},path==='settings'?'PUT':path==='inventory'?'PATCH':'POST')).status,401);
  assert.equal((await fetch(origin+'/api/admin/data')).status,401);
  assert.equal((await request('/api/orders',{},'POST',{origin:'https://invalid.example'})).status,403);
+ const readHtml=async path=>(await fetch(origin+path)).text();
+ const jsonLd=html=>JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
+ const liveProduct=await readHtml('/products/ivory-panjabi');
+ assert.ok(liveProduct.includes('rel="canonical" href="'+origin+'/products/ivory-panjabi"'));
+ assert.equal(jsonLd(liveProduct)[0].offers.price,2450);
+ assert.equal(jsonLd(liveProduct)[0].offers.availability,'https://schema.org/InStock');
+ assert.ok((await readHtml('/sitemap.xml')).includes(origin+'/products/ivory-panjabi'));
+ assert.ok(!(await readHtml('/sitemap.xml')).includes('<lastmod>'));
+ assert.ok((await readHtml('/robots.txt')).includes('Sitemap: '+origin+'/sitemap.xml'));
+ for(const path of ['/cart','/account','/checkout','/admin','/shop?q=test']){
+   assert.match(await readHtml(path),/<meta name="robots" content="[^"]*noindex/);
+ }
+ assert.ok((await readHtml('/shop?category=Panjabi')).includes('href="'+origin+'/shop?category=Panjabi"'));
+ assert.equal((await fetch(origin+'/products/does-not-exist')).status,404);
  const input={requestKey:randomUUID(),customer:'Local Test',phone:'01712345678',address:'Test address, Dhaka, Bangladesh',zone:'outside',note:'Local test only',items:[{id:'ivory-panjabi',size:'M',quantity:2}],total:1};
  const order=await ok(await request('/api/orders',input),201);assert.equal(order.total,5030);
  assert.deepEqual(await ok(await request('/api/orders',input),201),order);
@@ -39,10 +53,19 @@ try{
  let p=(await ok(await request('/api/admin/products',{name:'HTTP Test Product',category:'New category',price:700,image:uploaded.url,color:'Berry',hex:'#741f35',description:'HTTP integration sample',fabric:'Cotton',sizes:['M'],active:true,initialStock:5}))).product;
  p=(await ok(await request('/api/admin/products',{...p,name:'Updated HTTP Product',price:800}))).product;
  assert.ok((await (await fetch(origin+'/products/'+p.id)).text()).includes('Updated HTTP Product'));
+ assert.ok((await readHtml('/sitemap.xml')).includes('/products/'+p.id));
+ await ok(await request('/api/admin/inventory',{id:p.id,size:'M',stock:0,expectedStock:5,reason:'SEO availability regression'},'PATCH'));
+ assert.equal(jsonLd(await readHtml('/products/'+p.id))[0].offers.availability,'https://schema.org/OutOfStock');
  await ok(await request('/api/admin/products',{id:p.id,version:p.version},'DELETE'));assert.equal((await fetch(origin+'/products/'+p.id)).status,404);
+ assert.ok(!(await readHtml('/sitemap.xml')).includes('/products/'+p.id));
  data=await adminData();p=data.products.find(x=>x.id===p.id);await ok(await request('/api/admin/products',{id:p.id,version:p.version},'PATCH'));data=await adminData();assert.equal(data.products.find(x=>x.id===p.id).active,false);
 await ok(await request('/api/admin/settings',{...data.settings,heroTitle:'A changed homepage title',heroSlides:[...data.settings.heroSlides,{id:'slide-http',image:uploaded.url,alt:'A test slide'}],storeLive:false,zones:[...data.settings.zones,{id:'nearby',name:'Nearby Dhaka',fee:100}]},'PUT'));
   const homepage=await (await fetch(origin+'/')).text();
+  assert.match(homepage,/<meta name="robots" content="[^"]*noindex/);
+  assert.ok(!(await readHtml('/sitemap.xml')).includes('<loc>'));
+  assert.ok(!(await readHtml('/robots.txt')).includes('Sitemap:'));
+  assert.ok(!(await readHtml('/robots.txt')).includes('Disallow: /\n'));
+  assert.equal(jsonLd(await readHtml('/products/ivory-panjabi'))[0].offers,undefined);
   assert.ok(homepage.includes('A changed homepage title'));assert.ok(homepage.includes('slide-http'));
   assert.equal((await request('/api/orders',{...input,requestKey:randomUUID()})).status,503);
  assert.equal((await fetch(origin+'/api/admin/data',{headers:{cookie:'evelin_admin=tampered'}})).status,401);
