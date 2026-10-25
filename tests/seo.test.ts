@@ -1,3 +1,7 @@
+import {catalogSummary,categoryUrl,normalizeShopParams,relatedProducts} from '../lib/seo-content.ts';
+import {products} from '../lib/catalog.ts';
+import {productSchema,breadcrumbs} from '../lib/structured-data.ts';
+import {isIndexable} from '../lib/seo.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {siteOrigin,serializeJsonLd,hasAvailableSize,seoDescription} from '../lib/seo.ts';
@@ -16,4 +20,32 @@ test('availability only includes purchasable sizes with positive stock',()=>{
 test('metadata descriptions normalize multiline store content',()=>{
  assert.equal(seoDescription(' A   description '),'A description');
  assert.ok(seoDescription('x'.repeat(200)).length<=160);
+});
+test('category summaries use actual catalog attributes and preserve query URLs',()=>{
+ const summary=catalogSummary(products,'Panjabi');
+ assert.match(summary.description,/2 Panjabi/);
+ assert.ok(summary.sizes.includes('XL'));
+ assert.ok(summary.fabrics.includes('Cotton blend'));
+ assert.equal(categoryUrl('Men & Women'),'/shop?category=Men+%26+Women');
+ assert.match(catalogSummary([],'Panjabi').description,/no published/);
+});
+test('search and arbitrary facets are noindex; tracking parameters retain canonical category',()=>{
+ assert.equal(normalizeShopParams({category:'Panjabi',utm_source:'test'}).noindex,false);
+ for(const params of [{q:''},{size:'XL'},{sort:'price'},{category:['Panjabi','Abaya']}])assert.equal(normalizeShopParams(params).noindex,true);
+ assert.equal(normalizeShopParams({category:['Panjabi','Abaya']}).category,'Panjabi');
+});
+test('published stores can preserve indexing while orders are paused',()=>{
+ assert.equal(isIndexable(false,'true'),true);
+ assert.equal(isIndexable(true,'false'),false);
+ assert.equal(isIndexable(false,''),false);
+ assert.equal(isIndexable(true,''),true);
+});
+test('related products prioritize the same category',()=>{
+ assert.equal(relatedProducts(products,products[0])[0].category,products[0].category);
+ assert.ok(!relatedProducts(products,products[0]).some(p=>p.id===products[0].id));
+});
+test('breadcrumbs use absolute canonical URLs',()=>{
+ const schema=breadcrumbs('https://example.com',[{name:'Home',path:'/'},{name:'Panjabi',path:categoryUrl('Panjabi')}]);
+ assert.equal(schema.itemListElement[1].item,'https://example.com/shop?category=Panjabi');
+ assert.equal(schema.itemListElement[1].position,2);
 });

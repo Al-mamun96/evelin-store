@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "test:http": "node tests/http-smoke.mjs",
+    "test:seo": "node tests/seo-crawl.mjs",
     "db:backup": "node scripts/backup.mjs"
   },
   "dependencies": {

@@ -5,3 +5,6 @@ export function siteOrigin(value=process.env.NEXT_PUBLIC_SITE_URL):string|undefi
 export function seoDescription(text:string){return text.replace(/\s+/g,' ').trim().slice(0,160);}
 export function serializeJsonLd(value:unknown){return JSON.stringify(value).replace(/</g,'\\u003c');}
 export function hasAvailableSize(sizes:string[],stock:{size:string;stock:number}[]){return stock.some(row=>sizes.includes(row.size)&&row.stock>0);}
+
+// Explicit production indexing control can remain enabled while orders are paused.
+export function isIndexable(storeLive:boolean,override=process.env.SEO_INDEXABLE){return override==='true'||(override!=='false'&&storeLive);}

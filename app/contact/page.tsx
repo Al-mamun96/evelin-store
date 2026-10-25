@@ -1,3 +1,4 @@
+import {SiteIdentity} from '@/components/site-identity';
 import {pageMetadata} from '@/lib/page-metadata';
 import {Fragment} from 'react';
 import {getSettings} from '@/lib/store-settings';
@@ -6,7 +7,7 @@ export function generateMetadata(){const s=getSettings();return pageMetadata('/c
 export default function Page(){
   const s=getSettings(),chat=whatsappLink(s.whatsappNumber||s.contactPhone);
   const socials=([['Facebook',s.facebook],['Instagram',s.instagram],['TikTok',s.tiktok],['X (Twitter)',s.socialX]] as const).filter(([,href])=>href);
-  return <article className="section information">
+  return <article className="section information"><SiteIdentity path="/contact" title={s.contactTitle}/>
     <span className="eyebrow">GET IN TOUCH</span>
     <h1>{s.contactTitle}</h1>
     <p className="preserve-lines">{s.contactBody}</p>

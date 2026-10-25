@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import sharp from 'sharp';
 const directory=mkdtempSync(join(tmpdir(),'evelin-http-'));
 const password=randomBytes(24).toString('hex'),origin='http://127.0.0.1:3100';
-const child=spawn(process.execPath,['.next/standalone/server.js'],{env:{...process.env,PORT:'3100',HOSTNAME:'127.0.0.1',NEXT_PUBLIC_SITE_URL:origin,DATABASE_PATH:join(directory,'store.sqlite'),ADMIN_PASSWORD:password,SESSION_SECRET:randomBytes(32).toString('hex'),STORE_LIVE:'true'},stdio:'ignore'});
+const child=spawn(process.execPath,['.next/standalone/server.js'],{env:{...process.env,PORT:'3100',HOSTNAME:'127.0.0.1',NEXT_PUBLIC_SITE_URL:origin,DATABASE_PATH:join(directory,'store.sqlite'),ADMIN_PASSWORD:password,SESSION_SECRET:randomBytes(32).toString('hex'),STORE_LIVE:'true',SEO_INDEXABLE:'',TELEGRAM_BOT_TOKEN:'',TELEGRAM_CHAT_ID:''},stdio:'ignore'});
 let session='';
 const request=(path,body,method='POST',headers={})=>fetch(origin+path,{method,headers:{origin,cookie:session,'content-type':'application/json',...headers},body:JSON.stringify(body)});
 const adminData=async()=>{const r=await fetch(origin+'/api/admin/data',{headers:{cookie:session}});assert.equal(r.status,200);return r.json();};
@@ -39,6 +39,10 @@ try{
  const login=await request('/api/admin/login',{password});assert.equal(login.status,200);const cookie=login.headers.get('set-cookie');assert.ok(cookie.includes('HttpOnly'));assert.ok(cookie.includes('Secure'));assert.ok(cookie.includes('SameSite=strict'));session=cookie.split(';')[0];
  const dashboard=await (await fetch(origin+'/admin',{headers:{cookie:session}})).text();assert.ok(dashboard.includes('STORE STUDIO'));assert.ok(!dashboard.includes('Only plain objects'));
  assert.equal((await request('/api/admin/products',{},'POST',{origin:'https://invalid.example'})).status,401);
+ await ok(await request('/api/admin/categories',{name:'Empty Collection'}));
+ const emptyCategory=await readHtml('/shop?category=Empty+Collection');
+ assert.match(emptyCategory,/<meta name="robots" content="[^"]*noindex/);
+ assert.ok(!(await readHtml('/sitemap.xml')).includes('Empty+Collection'));
  let data=await adminData(),saved=data.orders.find(o=>o.id===order.id);assert.ok(saved);
  await ok(await request('/api/admin/orders',{...input,id:order.id,version:saved.version,zone:'dhaka',address:'Updated address, Dhaka, Bangladesh',items:[{id:'ivory-panjabi',size:'M',quantity:1}],discount:100,advance:500},'PUT'));
  data=await adminData();saved=data.orders.find(o=>o.id===order.id);assert.equal(saved.total,2430);assert.equal(saved.advance,500);assert.equal(saved.address,'Updated address, Dhaka, Bangladesh');assert.equal(data.inventory.find(i=>i.product_id==='ivory-panjabi'&&i.size==='M').stock,9);
@@ -63,7 +67,7 @@ await ok(await request('/api/admin/settings',{...data.settings,heroTitle:'A chan
   const homepage=await (await fetch(origin+'/')).text();
   assert.match(homepage,/<meta name="robots" content="[^"]*noindex/);
   assert.ok(!(await readHtml('/sitemap.xml')).includes('<loc>'));
-  assert.ok(!(await readHtml('/robots.txt')).includes('Sitemap:'));
+  assert.ok((await readHtml('/robots.txt')).includes('Sitemap: '+origin+'/sitemap.xml'));
   assert.ok(!(await readHtml('/robots.txt')).includes('Disallow: /\n'));
   assert.equal(jsonLd(await readHtml('/products/ivory-panjabi'))[0].offers,undefined);
   assert.ok(homepage.includes('A changed homepage title'));assert.ok(homepage.includes('slide-http'));

@@ -1,5 +1,5 @@
 'use client';
-import Image from 'next/image';
+import {getImageProps} from 'next/image';
 import Link from 'next/link';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {ArrowUpRight,ChevronLeft,ChevronRight,Pause,Play} from 'lucide-react';
@@ -28,10 +28,15 @@ export function HeroSlider({slides,caption,captionUrl='/shop',ctaLabel,ctaUrl,st
   const label=(index:number)=>`Slide ${index+1} of ${count}`;
   return <div className="hero-image hero-slider">
     <div className="hero-track" ref={track} role="group" aria-roledescription="carousel" aria-label="Collection highlights" tabIndex={0} onPointerDown={()=>setPlaying(false)} onKeyDown={e=>{if(e.key==='ArrowRight'){e.preventDefault();go(active+1);}else if(e.key==='ArrowLeft'){e.preventDefault();go(active-1);}}}>
-      {slides.map((slide,index)=><div className={'hero-slide'+(index===active?' current':'')} data-has-mobile={!!slide.mobileImage} key={slide.id} role="group" aria-roledescription="slide" aria-label={label(index)} aria-hidden={index!==active}>
-         {slide.mobileImage&&<Image src={slide.mobileImage} alt={slide.alt||storeName+' collection'} fill sizes="100vw" loading={index===0?undefined:'lazy'} draggable={false} className="hero-slide-img-mobile"/>}
-         <Image src={slide.image} alt={slide.alt||storeName+' collection'} fill priority={index===0} loading={index===0?undefined:'lazy'} sizes="(max-width: 750px) 100vw, 60vw" draggable={false} className="hero-slide-img-desktop"/>
-       </div>)}
+      {slides.map((slide,index)=>{
+        const shared={alt:slide.alt||storeName+' collection',fill:true,sizes:'(max-width: 750px) 100vw, 60vw',loading:index===0?'eager' as const:'lazy' as const};
+        const desktop=getImageProps({...shared,src:slide.image}).props;
+        const mobile=slide.mobileImage?getImageProps({...shared,src:slide.mobileImage,sizes:'100vw'}).props:null;
+        return <div className={'hero-slide'+(index===active?' current':'')} key={slide.id} role="group" aria-roledescription="slide" aria-label={label(index)} aria-hidden={index!==active}>
+          <picture>{mobile&&<source media="(max-width: 750px)" srcSet={mobile.srcSet} sizes={mobile.sizes}/>}<img {...desktop} alt={desktop.alt} fetchPriority={index===0?'high':'auto'} draggable={false} className="hero-slide-img"/></picture>
+        </div>;
+      })}
+
     </div>
     {count>1&&<>
       <button type="button" className="hero-arrow hero-arrow-prev" aria-label={'Previous slide'} disabled={active===0} onClick={()=>go(active-1)}><ChevronLeft size={20}/></button>
