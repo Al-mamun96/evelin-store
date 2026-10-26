@@ -9,8 +9,8 @@ import assert from 'node:assert/strict';
 
 // Only synthetic local data; never sends an order or notification to production.
 const directory=mkdtempSync(join(tmpdir(),'evelin-mobile-'));
-const origin='http://127.0.0.1:3102',database=join(directory,'store.sqlite');
-const child=spawn(process.execPath,['node_modules/next/dist/bin/next','start','-p','3102','-H','127.0.0.1'],{env:{...process.env,NEXT_PUBLIC_SITE_URL:origin,DATABASE_PATH:database,ADMIN_PASSWORD:randomBytes(24).toString('hex'),SESSION_SECRET:randomBytes(32).toString('hex'),STORE_LIVE:'true',SEO_INDEXABLE:'false',TELEGRAM_BOT_TOKEN:'',TELEGRAM_CHAT_ID:''},stdio:'ignore'});
+const origin='http://127.0.0.1:3103',database=join(directory,'store.sqlite');
+const child=spawn(process.execPath,['node_modules/next/dist/bin/next','start','-p','3103','-H','127.0.0.1'],{env:{...process.env,NEXT_PUBLIC_SITE_URL:origin,DATABASE_PATH:database,ADMIN_PASSWORD:randomBytes(24).toString('hex'),SESSION_SECRET:randomBytes(32).toString('hex'),STORE_LIVE:'true',SEO_INDEXABLE:'false',TELEGRAM_BOT_TOKEN:'',TELEGRAM_CHAT_ID:''},stdio:'ignore'});
 let browser;
 try{
  for(let n=0;n<100;n++){try{if((await fetch(origin+'/api/health')).ok)break;}catch{}await new Promise(r=>setTimeout(r,100));}
@@ -69,6 +69,22 @@ try{
  assert.equal(externalFonts.length,0,'Default fonts must be self-hosted');
  assert.deepEqual(errors,[]);
  mkdirSync('test-results',{recursive:true});await page.screenshot({path:'test-results/mobile-checkout-success.png',fullPage:true});
+ const orderNumber=await page.locator('.order-number').innerText();
+ await page.getByRole('navigation',{name:'Quick navigation'}).getByRole('link',{name:'Account',exact:true}).click();
+ await page.waitForURL(origin+'/account');await noOverflow();
+ assert.equal(await page.getByRole('navigation',{name:'Quick navigation'}).getByRole('link',{name:'Account',exact:true}).getAttribute('aria-current'),'page');
+ assert.equal(await page.locator('.account-hub a[href^="tel:"],.account-hub a[href^="mailto:"],.account-contact-list').count(),0);
+ await page.getByLabel('Order number').fill(orderNumber);
+ await page.getByLabel('Phone number',{exact:true}).fill('01900000000');
+ await page.getByRole('button',{name:'Track order',exact:true}).click();
+ await page.getByRole('alert').filter({hasText:'No order matches those details.'}).waitFor();
+ assert.equal(await page.locator('.account-order-result').count(),0);
+ await page.getByLabel('Phone number',{exact:true}).fill('01700000000');
+ await page.getByRole('button',{name:'Track order',exact:true}).click();
+ await page.getByRole('heading',{name:'Your order at a glance'}).waitFor();
+ assert.ok((await page.locator('.account-order-result').innerText()).includes(orderNumber));
+ assert.equal(await page.locator('.account-hub').getByRole('link',{name:'Need help?',exact:true}).getAttribute('href'),'/contact');
+ await page.evaluate(()=>scrollTo({top:0,behavior:'instant'}));await page.locator('.toast.visible').waitFor({state:'hidden'});await page.screenshot({path:'test-results/mobile-account.png',fullPage:true});
  for(const width of [320,375,768,1440]){
   await page.setViewportSize({width,height:900});await page.goto(origin);await noOverflow();
   await page.goto(origin+'/products/ivory-panjabi');await noOverflow();
@@ -77,8 +93,11 @@ try{
   assert.ok(Math.abs(add.y-buy.y)<1&&buy.x>=add.x+add.width,'Purchase buttons must remain side by side');
   assert.ok(add.height>=44&&buy.height>=44,'Touch targets must remain usable');
   assert.ok(await page.locator('.product-buy-now').evaluate(el=>getComputedStyle(el).backgroundColor!==getComputedStyle(document.querySelector('.product-add-cart')).backgroundColor),'Buy now must be visually distinct');
+  await page.goto(origin+'/account');await noOverflow();
+  assert.ok((await page.getByRole('button',{name:'Track order',exact:true}).boundingBox()).height>=44);
  }
- console.log('PASS: responsive widths 320/375/390/768/1440, mobile menu, size selection, touch pinch zoom, Buy now validation/navigation/cart preservation, single-page checkout, lost-response retry (one order), no page errors and no external default font requests. Synthetic local data only.');
+ assert.deepEqual(errors,[]);
+ console.log('PASS: Account navigation and active state, no contact-info section, wrong-phone privacy and successful tracking,  responsive widths 320/375/390/768/1440, mobile menu, size selection, touch pinch zoom, Buy now validation/navigation/cart preservation, single-page checkout, lost-response retry (one order), no page errors and no external default font requests. Synthetic local data only.');
 }finally{
  await browser?.close();child.kill();await new Promise(resolve=>child.exitCode!==null?resolve():child.once('exit',resolve));
  // This exact directory was created by mkdtemp above and contains only test fixtures.

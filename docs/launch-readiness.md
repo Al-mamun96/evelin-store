@@ -12,7 +12,7 @@
 
 Run `npm test`, `npm run build`, `npm run test:http`, `npm run test:seo`, `npm run test:mobile` and `npm audit`.
 
-The mobile test requires Chrome installed and uses local port 3102. It never accepts a production origin. The production Docker image uses Node 24; this Windows validation environment currently has Node 22.22.3 and emits SQLite/engine warnings.
+The mobile test requires Chrome installed and uses local port 3103. It never accepts a production origin. The production Docker image uses Node 24; this Windows validation environment currently has Node 22.22.3 and emits SQLite/engine warnings.
 
 ## Owner/access-dependent work — not completed or fabricated
 

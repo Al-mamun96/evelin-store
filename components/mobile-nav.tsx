@@ -30,7 +30,7 @@ export function MobileNav({whatsapp,phone}:{whatsapp?:string;phone?:string}){
     {href:'/reviews',label:'Review',icon:Star},
     {href:'/account',label:'Account',icon:User}
   ];
-  const active=(href:string)=>href==='/'?pathname==='/':pathname.startsWith(href);
+  const active=(href:string)=>href==='/'?pathname==='/':(pathname===href||pathname.startsWith(href+'/'));
   return <nav className="mobile-nav" aria-label="Quick navigation">{items.map(({href,label,icon:Icon,external})=>{
     const current=!external&&active(href);
     const content=<><span className="mobile-nav-icon"><Icon size={20} strokeWidth={1.6}/></span><span className="mobile-nav-label">{label}</span></>;

@@ -11,7 +11,7 @@ const decode=s=>s.replace(/&amp;/g,'&').replace(/&#x27;/g,"'").replace(/&quot;/g
 const bodyOnly=html=>html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'');
 const schemas=html=>[...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].flatMap(m=>{const j=JSON.parse(m[1]);return Array.isArray(j)?j:j['@graph']||[j];});
 const canonical=html=>decode(html.match(/<link rel="canonical" href="([^"]+)"/)?.[1]||'');
-const links=html=>[...bodyOnly(html).matchAll(/<a\b[^>]*href="([^"]+)"/g)].map(m=>new URL(decode(m[1]),origin)).filter(u=>u.origin===origin);
+const links=(html,base=origin)=>[...bodyOnly(html).matchAll(/<a\b[^>]*href="([^"]+)"/g)].map(m=>new URL(decode(m[1]),base)).filter(u=>u.origin===origin);
 const htmlPages=new Map(),discovered=new Set(),timings=[];
 async function read(path){const start=performance.now();const r=await fetch(new URL(path,origin),{redirect:'manual'});const html=await r.text();timings.push(performance.now()-start);return {r,html};}
 try{
@@ -66,8 +66,8 @@ try{
  const robots=(await read('/robots.txt')).html;assert.ok(robots.includes('Sitemap: '+origin+'/sitemap.xml'));assert.ok(!robots.includes('Disallow: /products'));
  // Check all rendered local navigation targets; fragments are checked against actual IDs.
  let checkedLinks=0;
- for(const html of htmlPages.values()){
-  for(const link of links(html)){
+ for(const [pageUrl,html] of htmlPages){
+  for(const link of links(html,pageUrl)){
    if(link.pathname.startsWith('/api/')||link.pathname.startsWith('/admin/'))continue;
    const key=link.origin+link.pathname+link.search;
    let target=htmlPages.get(key);
