@@ -1,17 +1,14 @@
 import Link from 'next/link';
-import {ArrowUpRight,ArrowRight,UserRound,PackageSearch,ShoppingBag,MessageCircle,Truck,RotateCcw,ShieldCheck} from 'lucide-react';
+import {ArrowUpRight,ArrowRight,PackageSearch,ShoppingBag,MessageCircle,Truck,RotateCcw,ShieldCheck} from 'lucide-react';
 import type {StoreSettings} from '@/lib/store-settings';
 
 import {OrderTracker} from './order-tracker';
+import {CustomerAccount} from './customer-account';
 
 export function AccountHub({settings:s}:{settings:StoreSettings}){
 
  return <section className="section account-hub">
-  <header className="account-welcome">
-   <div className="account-welcome-top"><span className="eyebrow">YOUR {s.storeName.toUpperCase()}</span><span className="account-guest"><UserRound size={14} aria-hidden="true"/> Guest access</span></div>
-   <div className="account-welcome-body"><div><h1>A little space.<br/><em>Just for you.</em></h1><p>Your orders, your next favourites, and a helping hand. All in one place.</p></div><span className="account-monogram" aria-hidden="true">{s.storeName.charAt(0).toUpperCase()}</span></div>
-   <div className="account-welcome-note"><ShieldCheck size={17} aria-hidden="true"/><span>No password needed. Find your order using your checkout details.</span></div>
-  </header>
+  <CustomerAccount storeName={s.storeName}/>
   <nav className="account-shortcuts" aria-label="Account shortcuts">
    <a href="#track-order"><PackageSearch size={22} aria-hidden="true"/><span>Track order<small>See its latest status</small></span><ArrowUpRight size={16} aria-hidden="true"/></a>
    <Link href="/cart"><ShoppingBag size={22} aria-hidden="true"/><span>Shopping bag<small>Your selected pieces</small></span><ArrowUpRight size={16} aria-hidden="true"/></Link>
