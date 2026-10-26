@@ -14,20 +14,27 @@
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "test:http": "node tests/http-smoke.mjs",
     "test:seo": "node tests/seo-crawl.mjs",
+    "test:mobile": "node tests/mobile-smoke.mjs",
     "db:backup": "node scripts/backup.mjs"
   },
   "dependencies": {
-    "next": "16.3.4",
+    "@fontsource-variable/dm-sans": "5.3.0",
+    "@fontsource-variable/inter": "5.3.0",
+    "@fontsource-variable/playfair-display": "5.3.0",
+    "@fontsource/italiana": "5.3.0",
+    "@fontsource/poppins": "5.3.0",
+    "lucide-react": "1.31.0",
+    "next": "16.4.3",
     "react": "19.2.6",
     "react-dom": "19.2.6",
-    "lucide-react": "1.31.0",
-    "zod": "3.25.76",
-    "sharp": "0.35.4"
+    "sharp": "0.35.5",
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
+    "playwright-core": "1.64.1",
     "typescript": "5.9.3"
   }
 }

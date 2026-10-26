@@ -1,3 +1,4 @@
+import {localFonts} from './local-fonts.ts';
 /**
  * Client-safe constants.
  *
@@ -68,14 +69,14 @@ export function safeFont(value:unknown,fallback:string):string{
   return typeof value==='string'&&known.includes(value)?value:fallback;
 }
 /** Font stacks are built from whitelisted names only, never from raw input. */
-export const fontStack=(family:string,fallback:string)=>`'${family}',${fallback}`;
+export const fontStack=(family:string,fallback:string)=>`'${localFonts[family]||family}',${fallback}`;
 export const fontUrl=(heading:string,body:string)=>{
   // Keep Inter for the existing menu typography, but load each family only once.
-  const families=[...new Set([heading,body,'Inter'])].map(name=>{
+  const families=[...new Set([heading,body,'Inter'])].filter(name=>!localFonts[name]).map(name=>{
     const weights=['Italiana','DM Serif Display'].includes(name)?'400':name==='DM Sans'?'400;450;500;550;600;650;700':'400;500;600;700';
     return 'family='+name.replace(/ /g,'+')+':wght@'+weights;
   });
-  return 'https://fonts.googleapis.com/css2?'+families.join('&')+'&display=swap';
+  return families.length?'https://fonts.googleapis.com/css2?'+families.join('&')+'&display=swap':'';
 };
 
 /**

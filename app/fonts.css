@@ -1,0 +1,9 @@
+/* Self-host the current storefront and default fonts; unused faces are not downloaded. */
+@import '@fontsource/poppins/400.css';
+@import '@fontsource/poppins/500.css';
+@import '@fontsource/poppins/600.css';
+@import '@fontsource/poppins/700.css';
+@import '@fontsource/italiana/400.css';
+@import '@fontsource-variable/playfair-display';
+@import '@fontsource-variable/dm-sans';
+@import '@fontsource-variable/inter';
