@@ -1,6 +1,6 @@
 'use client';
 import {requestKey as newRequestKey} from '@/lib/request-key';
-import {HEADING_FONTS,BODY_FONTS} from '@/lib/shared';
+import {HEADING_FONTS,BODY_FONTS,fontStack} from '@/lib/shared';
 import {useState,FormEvent} from 'react';
 import {Plus,Trash2,ExternalLink} from 'lucide-react';
 import type {StoreSettings} from '@/lib/store-settings';
@@ -27,10 +27,10 @@ export function StoreEditor({settings,mutate,busy,section}:{settings:StoreSettin
   </label>
 </div>
 <div className="font-preview">
-  <span style={{fontFamily:"'"+value.headingFont+"',Georgia,serif"}}>Aa</span>
+  <span style={{fontFamily:fontStack(value.headingFont,'Georgia,serif')}}>Aa</span>
   <div>
-    <p style={{fontFamily:"'"+value.headingFont+"',Georgia,serif"}}>{(value.heroTitle.split('\n')[0]||'Timeless')}</p>
-    <p className="font-preview-body" style={{fontFamily:"'"+value.bodyFont+"',Arial,sans-serif"}}>The quick brown fox jumps over the lazy dog</p>
+    <p style={{fontFamily:fontStack(value.headingFont,'Georgia,serif')}}>{(value.heroTitle.split('\n')[0]||'Timeless')}</p>
+    <p className="font-preview-body" style={{fontFamily:fontStack(value.bodyFont,'Arial,sans-serif')}}>The quick brown fox jumps over the lazy dog</p>
   </div>
 </div>
 <p className="studio-hint">Choose a font and press Save changes to apply it across the whole website.</p>
