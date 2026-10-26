@@ -153,3 +153,4 @@ body:has(.studio-root)>.announcement,body:has(.studio-root) .header,body:has(.st
 .hero-dot::before{content:"";width:8px;height:8px;background:#ffffffa6;border-radius:50%;box-shadow:0 1px 4px #0006;transition:width .25s}
 .hero-dot.active::before{width:22px;border-radius:5px;background:#fff}
 @media(max-width:650px){.hero-dots{bottom:40px}}
+.product-buy-now{width:100%;margin-top:12px;background:transparent;color:var(--wine)}.product-buy-now:hover{background:var(--wine);color:#fff}

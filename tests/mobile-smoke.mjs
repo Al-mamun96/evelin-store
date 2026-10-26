@@ -27,6 +27,9 @@ try{
  await page.goto(origin+'/products/ivory-panjabi');await noOverflow();
  await page.getByRole('button',{name:'Add to bag',exact:true}).click();
  await page.getByRole('alert').filter({hasText:'Please choose your size.'}).waitFor();
+ await page.getByRole('button',{name:'Buy now',exact:true}).click();
+ assert.equal(new URL(page.url()).pathname,'/products/ivory-panjabi');
+ await page.getByRole('alert').filter({hasText:'Please choose your size.'}).waitFor();
  await page.locator('.size-options').getByRole('button',{name:'M',exact:true}).click();
  await page.getByRole('button',{name:'Add to bag',exact:true}).click();
  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('evelin-cart')||'[]').length===1);
@@ -38,7 +41,10 @@ try{
  await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:points(80)});
  await page.waitForFunction(()=>Number(document.querySelector('.detail-zoom-image').style.transform.match(/scale\(([^)]+)/)?.[1])>1);
  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
- await page.goto(origin+'/checkout');await page.getByLabel('Full name').fill('Mobile test customer');
+ await page.getByRole('button',{name:'Buy now',exact:true}).click();
+ await page.waitForURL(origin+'/checkout');
+ await page.waitForFunction(()=>JSON.parse(localStorage.getItem('evelin-cart')||'[]')[0]?.quantity===2);
+ await page.getByLabel('Full name').fill('Mobile test customer');
  await page.getByLabel('Mobile number').fill('01700000000');
  await page.getByLabel('Full delivery address').fill('Synthetic test address, Dhaka');
  await noOverflow();
@@ -58,12 +64,13 @@ try{
  assert.equal(new URL(page.url()).pathname,'/checkout');
  assert.equal(keys.length,2);assert.equal(keys[0],keys[1]);
  const db=new DatabaseSync(database,{readOnly:true});
- assert.equal(db.prepare('SELECT count(*) AS count FROM orders').get().count,1);db.close();
+ assert.equal(db.prepare('SELECT count(*) AS count FROM orders').get().count,1);
+ assert.equal(JSON.parse(db.prepare('SELECT items FROM orders').get().items)[0].quantity,2);db.close();
  assert.equal(externalFonts.length,0,'Default fonts must be self-hosted');
  assert.deepEqual(errors,[]);
  mkdirSync('test-results',{recursive:true});await page.screenshot({path:'test-results/mobile-checkout-success.png',fullPage:true});
  for(const width of [320,375,768,1440]){await page.setViewportSize({width,height:900});await page.goto(origin);await noOverflow();}
- console.log('PASS: responsive widths 320/375/390/768/1440, mobile menu, size selection, touch pinch zoom, single-page checkout, lost-response retry (one order), no page errors and no external default font requests. Synthetic local data only.');
+ console.log('PASS: responsive widths 320/375/390/768/1440, mobile menu, size selection, touch pinch zoom, Buy now validation/navigation/cart preservation, single-page checkout, lost-response retry (one order), no page errors and no external default font requests. Synthetic local data only.');
 }finally{
  await browser?.close();child.kill();await new Promise(resolve=>child.exitCode!==null?resolve():child.once('exit',resolve));
  // This exact directory was created by mkdtemp above and contains only test fixtures.
