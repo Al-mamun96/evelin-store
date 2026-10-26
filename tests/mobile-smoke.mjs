@@ -25,13 +25,13 @@ try{
  assert.ok(await page.locator('.menu-dialog').evaluate(el=>el.open));
  await page.getByRole('button',{name:'Close menu',exact:true}).click();
  await page.goto(origin+'/products/ivory-panjabi');await noOverflow();
- await page.getByRole('button',{name:'Add to bag',exact:true}).click();
+ await page.getByRole('button',{name:'Add to cart',exact:true}).click();
  await page.getByRole('alert').filter({hasText:'Please choose your size.'}).waitFor();
  await page.getByRole('button',{name:'Buy now',exact:true}).click();
  assert.equal(new URL(page.url()).pathname,'/products/ivory-panjabi');
  await page.getByRole('alert').filter({hasText:'Please choose your size.'}).waitFor();
  await page.locator('.size-options').getByRole('button',{name:'M',exact:true}).click();
- await page.getByRole('button',{name:'Add to bag',exact:true}).click();
+ await page.getByRole('button',{name:'Add to cart',exact:true}).click();
  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('evelin-cart')||'[]').length===1);
  const photo=page.locator('.detail-photo');await photo.scrollIntoViewIfNeeded();
  const rect=await photo.boundingBox(),cdp=await context.newCDPSession(page);
@@ -69,7 +69,15 @@ try{
  assert.equal(externalFonts.length,0,'Default fonts must be self-hosted');
  assert.deepEqual(errors,[]);
  mkdirSync('test-results',{recursive:true});await page.screenshot({path:'test-results/mobile-checkout-success.png',fullPage:true});
- for(const width of [320,375,768,1440]){await page.setViewportSize({width,height:900});await page.goto(origin);await noOverflow();}
+ for(const width of [320,375,768,1440]){
+  await page.setViewportSize({width,height:900});await page.goto(origin);await noOverflow();
+  await page.goto(origin+'/products/ivory-panjabi');await noOverflow();
+  const add=await page.getByRole('button',{name:'Add to cart',exact:true}).boundingBox();
+  const buy=await page.getByRole('button',{name:'Buy now',exact:true}).boundingBox();
+  assert.ok(Math.abs(add.y-buy.y)<1&&buy.x>=add.x+add.width,'Purchase buttons must remain side by side');
+  assert.ok(add.height>=44&&buy.height>=44,'Touch targets must remain usable');
+  assert.ok(await page.locator('.product-buy-now').evaluate(el=>getComputedStyle(el).backgroundColor!==getComputedStyle(document.querySelector('.product-add-cart')).backgroundColor),'Buy now must be visually distinct');
+ }
  console.log('PASS: responsive widths 320/375/390/768/1440, mobile menu, size selection, touch pinch zoom, Buy now validation/navigation/cart preservation, single-page checkout, lost-response retry (one order), no page errors and no external default font requests. Synthetic local data only.');
 }finally{
  await browser?.close();child.kill();await new Promise(resolve=>child.exitCode!==null?resolve():child.once('exit',resolve));
